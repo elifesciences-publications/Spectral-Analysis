@@ -4,6 +4,7 @@ function varargout=wt(d,varargin)
 % normalized variance.
 %
 % USAGE: [wave,period,scale,coi,sig95]=wt(d[,params])
+
 % 
 % d: a time series
 % wave: the wavelet transform of d
