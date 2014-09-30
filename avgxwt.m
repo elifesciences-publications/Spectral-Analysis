@@ -23,7 +23,7 @@ global lightChannelIndex globData globTime;
 %     errordlg('Isothreshold value must be < 1')
 %     return;
 % end
-
+%
 if isempty(isoThresh)
     isoThresh = 1;
 end
