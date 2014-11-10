@@ -77,7 +77,7 @@ time_reduced = time;
 
 
 %% TO PLOT OR NOT TO PLOT
-plotfig  = questdlg('Would you like to plot time-varying frequencies for individual files?','To Plot or Not to Plot?','No','Yes','No');
+% plotfig  = questdlg('Would you like to plot time-varying frequencies for individual files?','To Plot or Not to Plot?','No','Yes','No');
 
 %% Convert 3-D matrix of signals into a 2-D matrix
 % Converts the 3-D matrix of signals (data points, files, channels) into a
