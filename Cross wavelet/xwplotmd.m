@@ -78,7 +78,7 @@ time_reduced = time;
 
 %% TO PLOT OR NOT TO PLOT
 % plotfig  = questdlg('Would you like to plot time-varying frequencies for individual files?','To Plot or Not to Plot?','No','Yes','No');
-
+plotfig = 'no';
 %% Convert 3-D matrix of signals into a 2-D matrix
 % Converts the 3-D matrix of signals (data points, files, channels) into a
 % 2-D matrix of signals (data points, [(n file's channels of file1)
@@ -689,7 +689,8 @@ statMat = [statMat intraIsoVars];
 
 %% Creating a Master Structure Variable that Saves All the Important Variables
 
-answer = questdlg('Save Data?','Saving the Master Variable','No','Yes','No');
+% answer = questdlg('Save Data?','Saving the Master Variable','No','Yes','No');
+answer = 'no';
 if strcmpi(answer,'Yes')
     clear mName
 %     [master.Data, master.Time,master.Time_reduced, master.statMat] =...

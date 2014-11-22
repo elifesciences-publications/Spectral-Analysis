@@ -160,7 +160,8 @@ icc_pos = find(ch==icc);
 extra_pos = find(ch~=icc);
 ch_extra = ch;
 ch_extra(icc_pos)=[];
-artChk = questdlg('Auto-remove Stimulus Artifacts?');
+% artChk = questdlg('Auto-remove Stimulus Artifacts?');
+artChk = 'yes';
 for fileNum = 1:nFiles
     %%%% Truncating Signals to Common Time Portion
     [fpt,lpt] = deal([]);
