@@ -1,7 +1,9 @@
-% RUNWAVELET - Loads multiple data files and runs wavelet analysis on them
+% RUNWAVELET - Allows for selection of multiple data files to load for susequent wavelet analysis
 % Runs mfload, newpreprocessdata, and xwplotmd (in that order). Many other
 % custom-written scripts are also executed in the process.
 
+addpath(genpath('C:\Users\pujalaa\Documents\MATLAB\General'));
+addpath(genpath('C:\Users\pujalaa\Documents\MATLAB\Wavelet'));
 
 %% Load Multiple Files at Once and Create a Single Large Data Structure
 % Use loadfiles instead of mfload to singly load data from files into
@@ -19,5 +21,8 @@ mfload
 
 newpreprocess
 
+
 %% Runs Wavelet Routines on Conditioned Time Series Signals
 xwplotmd
+
+
