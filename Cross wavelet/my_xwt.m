@@ -6,16 +6,16 @@ function [varargout] = my_xwt(x,y,t,varargin);
 fourier_factor = 1.0330; % Conversion factor for changing wavelet scales to periods.
 
 %% Adjustable parameter
-peakDetectionThreshold = 0.2; % Determines the peak detection for global wavelet spectrum plotted to the right of XWT.
+peakDetectionThreshold = 0.1; % Determines the peak detection for global wavelet spectrum plotted to the right of XWT.
                      % Lower value results in detection of smaller peaks.
                  
-freqRange = [0.1 10]; % Power for frequencies only within this range will be calculated and displayed
+freqRange = [15 30]; % Power for frequencies only within this range will be calculated and displayed
 
 scaleRange = 1./(freqRange*fourier_factor);
 S0 = min(scaleRange);
 MaxScale = max(scaleRange);
 Args=struct('Pad',1,...      % pad the time series with zeroes (recommended)
-    'Dj',1/48, ...    % this will do 48 sub-octaves per octave
+    'Dj',1/64, ...    % this will do 48 sub-octaves per octave
     'S0',S0,...    % this says start at a scale of 2*dt
     'J1',[],...
     'Mother','Morlet', ...
