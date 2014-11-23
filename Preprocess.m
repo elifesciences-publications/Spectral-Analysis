@@ -1,8 +1,8 @@
-% PREPROCESSDATA2
-% Creates a data structure from many data files and preprocesses it to make
-% it ready for wavelet analysis
-% Updated: 26-Aug-2014 (Modifications to allow for specification and overlaying of light channel on XWT)
-% Author: AP
+% Preprocess - Conditions multifile signals loaded by LoadFiles
+% Looks at the multifile data structure created by LoadFiles and preprocesses
+% the timeseries in preparation for subsequent wavelet analysis
+
+% Author: Avinash Pujala
 
 
 %% Declaring a Few Global Variables
