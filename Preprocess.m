@@ -149,9 +149,7 @@ else
     lastCommonTime = timeRange(end);
 end
 
-time = firstCommonTime:samplingInt:lastCommonTime-10*samplingInt; %%% Creates a common time vector. Subtracting a few sampling
-%%% intervals is important for eliminating certain errors that may occur
-%%% because of unequal sampling of all the data files
+time = firstCommonTime:samplingInt:lastCommonTime; % Creates common time vector
 lenTime =length(time);
 
 
