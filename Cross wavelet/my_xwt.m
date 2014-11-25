@@ -5,7 +5,7 @@ function [varargout] = my_xwt(x,y,t,varargin)
 %% Fixed parameters
 fourier_factor = 1.0330; % Conversion factor for changing wavelet scales to periods.
 
-%% Adjustable parameter
+%% Adjustable parameters
 peakDetectionThreshold = 0.1; % Determines the peak detection for global wavelet spectrum plotted to the right of XWT.
                      % Lower value results in detection of smaller peaks.
                  

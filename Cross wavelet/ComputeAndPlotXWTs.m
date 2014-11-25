@@ -681,8 +681,8 @@ statMat = [statMat intraIsoVars];
 %% NEED FIXING --> The following lines of code need to be fixed to take multidimensional Wxy into acct
 % [mfvec,pfvec] = instantaneouswavefreq(Wxy_iso(:,:,1,1),freq);
 % tvpower = instantaneouswavepow(Wxy_iso(:,:,1,1));
-% dynamicfreqpowplot
-% plotphase
+dynamicfreqpowplot
+plotphase
 
 
 
