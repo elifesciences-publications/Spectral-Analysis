@@ -1,11 +1,10 @@
-% XWPLOTMD  Generates and plots crosswavelet spectra for pairs of signals
+% ComputeAndPlotXWTs  Generates and plots crosswavelet spectra for pairs of signals
 % This is a variant of XWPLOT in which data is stored as multidimensional
 % arrays instead of as structures. File numbers change across the 3rd
 % dimension and channel pair numbers vary across the 4th dimension.
 % For e.g., Wxy(:,:,2,3) is the matrix of XW coefficients from the 2nd file
 % and computed for the 3rd pair of channels being compared.
 
-% Last update: 19-Mar-2014
 % Author: AP
 
 %% Variables Glossary
@@ -22,7 +21,7 @@
 
 %% Wavelet Parameters
 
-wavelet_scale_resolution = 1/64; % (Must at least be 1/10)
+wavelet_scale_resolution = 1/2^7; % (Must at least be 1/10)
 number_of_phase_bins = 90; % Number of bins for phase histograms
 motherWavelet = 'Morlet'; %%%('Morlet', 'Paul','DOG') - For now use only Morlet, other wavelets will give erroneous results
 avgCheck =0;
@@ -77,8 +76,8 @@ time_reduced = time;
 
 
 %% TO PLOT OR NOT TO PLOT
-plotfig  = questdlg('Would you like to plot time-varying frequencies for individual files?','To Plot or Not to Plot?','No','Yes','No');
-
+% plotfig  = questdlg('Would you like to plot time-varying frequencies for individual files?','To Plot or Not to Plot?','No','Yes','No');
+plotfig = 'no';
 %% Convert 3-D matrix of signals into a 2-D matrix
 % Converts the 3-D matrix of signals (data points, files, channels) into a
 % 2-D matrix of signals (data points, [(n file's channels of file1)
@@ -679,7 +678,6 @@ statMat = [statMat intraIsoVars];
 % end %
 
 
-
 %% NEED FIXING --> The following lines of code need to be fixed to take multidimensional Wxy into acct
 % [mfvec,pfvec] = instantaneouswavefreq(Wxy_iso(:,:,1,1),freq);
 % tvpower = instantaneouswavepow(Wxy_iso(:,:,1,1));
@@ -690,7 +688,8 @@ statMat = [statMat intraIsoVars];
 
 %% Creating a Master Structure Variable that Saves All the Important Variables
 
-answer = questdlg('Save Data?','Saving the Master Variable','No','Yes','No');
+% answer = questdlg('Save Data?','Saving the Master Variable','No','Yes','No');
+answer = 'no';
 if strcmpi(answer,'Yes')
     clear mName
 %     [master.Data, master.Time,master.Time_reduced, master.statMat] =...

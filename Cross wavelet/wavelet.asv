@@ -110,10 +110,10 @@ end
 
 n1 = length(Y);
 
-if (s0 == -1), s0=2*dt; end
+if (s0 == -1), s0=2*dt;, end
 if (dj == -1), dj = 1./4; end
-if (J1 == -1), J1=fix((log(n1*dt/s0)/log(2))/dj); end
-if (mother == -1), mother = 'MORLET'; end
+if (J1 == -1), J1=fix((log(n1*dt/s0)/log(2))/dj);, end
+if (mother == -1), mother = 'MORLET';, end
 
 %....construct time series to analyze, pad if necessary
 x(1:n1) = Y - mean(Y);

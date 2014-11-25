@@ -1,5 +1,5 @@
-function [ dataStruct,timeAxisStruct,samplingInts ] = createdatastructure( files,paths )
-% CREATEDATASTRUCTURE Creates structure variables for data and time axis
+function [ dataStruct,timeAxisStruct,samplingInts ] = CreateDataStructure( files,paths )
+% CreateDataStructure Creates structure variables for data and time axis
 % from files entered as character input
 % [dataStruct,timeAxisStruct,samplingInts] =
 % createdatastructure(files,paths);

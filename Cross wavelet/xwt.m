@@ -54,7 +54,7 @@ function varargout=xwt(x,y,varargin)
 
 %% --------------- OPTIONS ------ AP (06-Jun-2012)
 sigma_extent = 'full'; % ('select' or 'full'; default: 'full')
-noise_type = 'red'; % ('red' or 'white'; default: 'red')
+noise_type = 'white'; % ('red' or 'white'; default: 'white')
 
 %% ---------------- End of OPTIONS
 
@@ -71,10 +71,10 @@ if length(t)<4
 end
 
 n=length(t);
-
+dj = varargin{2};
 %----------default arguments for the wavelet transform-----------
 Args=struct('Pad',1,...      % pad the time series with zeroes (recommended)
-    'Dj',1/64, ...    % this will do 64 sub-octaves per octave
+    'Dj',dj, ...    % this will do 64 sub-octaves per octave
     'S0',2*dt,...    % this says start at a scale of 2 years
     'J1',[],...
     'Mother','DOG', ...
