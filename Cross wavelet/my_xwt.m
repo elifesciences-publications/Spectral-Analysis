@@ -1,4 +1,4 @@
-function [varargout] = my_xwt(x,y,t,varargin);
+function [varargout] = my_xwt(x,y,t,varargin)
 % My custom written XWT based on xwt.m by Grinsted et al
 % [Wxy,period,scale,coi,sig95] = my_xwt(x,y,time);
 
@@ -116,7 +116,7 @@ powerSpectrum = sum(abs(Wxy),2);
 normPowerSpectrum = powerSpectrum/max(powerSpectrum);
 logPowerSpectrum = log2(powerSpectrum);
 normLogPowerSpectrum = logPowerSpectrum/max(logPowerSpectrum);
-[maxtab,mintab] = peakdet(normLogPowerSpectrum,peakDetectionThreshold);
+[maxtab,~] = peakdet(normLogPowerSpectrum,peakDetectionThreshold);
 if numel(maxtab) == 0
     maxtab(:,1)= find(normPowerSpectrum==max(normPowerSpectrum));
     maxtab(:,2)= normPowerSpectrum(normPowerSpectrum == max(normPowerSpectrum));
@@ -141,7 +141,7 @@ xlabel('')
 ylims1 = get(ax1,'ylim');
 yticklabels_ax1 = str2num(get(ax1,'yticklabel'));
 dyticklabels_ax1 = diff(yticklabels_ax1);
-if dyticklabels_ax1(1)== dyticklabels_ax1, yScale = 'linear'; else,yScale = 'log'; end
+if dyticklabels_ax1(1)== dyticklabels_ax1, yScale = 'linear'; else yScale = 'log'; end
 yl = ylabel('Frequency (Hz)','fontsize',14); 
 ylpos = get(yl,'pos');
 aPos = get(ax1,'position');
