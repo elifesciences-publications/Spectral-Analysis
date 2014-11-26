@@ -1,13 +1,13 @@
 function varargout = ComputeXWT(varargin)
 
 % My custom written XWT based on xwt.m by Grinsted et al
-% [Wxy,period,scale,coi,sig95] = my_xwt(x,y,time,freqRange,dj,stringency,phaseType);
+% [Wxy,period,scale,coi,sig95] = ComputeXWT(x,y,time,freqRange,dj,stringency,phaseType);
 
 %% Fixed and variable parameters
 fourier_factor      = 1.0330; % Conversion factor for changing wavelet scales to periods (true for wavenumber = 6)
 Pad                 = 1; % Zero padding of signals (Pad = 1: Pad with zeroes; Pad = 0: Don't zero pad)
 motherWavelet       = 'Morlet'; %%%('Morlet', 'Paul','DOG') - For now use only Morlet, other wavelets will give erroneous results
-figdisp             = 'y'; %%% ('n' = does not display figures; [] = displays figs );
+figdisp             = 'n'; %%% ('n' = does not display figures; [] = displays figs );
 plotfig             = 'no';
 yShifter            = 1.5; %(Factor by which the max value of a trace is multiplied...
 %  and shifted along the y-axis to prevent overlap; default = 1.5)
@@ -86,7 +86,9 @@ end
 % clear Wxy3d % 3D array with stacking Wxy matrices generated for each pair of channels from each file along the z-dimension
 % clear sigxy
 
-[Wxy,period,~,coi,sig95]= xwt([time(:) x(:)],[time(:) y],Pad, dj,'S0',S0, 'ms',MaxScale, 'Mother', motherWavelet);
+x = [time(:) x(:)];
+y = [time(:) y(:)];
+[Wxy,period,~,coi,sig95]= xwt(x,y,Pad, dj,'S0',S0, 'ms',MaxScale, 'Mother', motherWavelet);
 freq =1./period;
 
 %% Removing regions outside COI
@@ -110,25 +112,29 @@ else
 end
 
 varargout{1} = Wxy;
+varargout{2} = period;
+varargout{3} = coi;
+varargout{4} = sig95;
 
 end
 %% Global Power Spectrum
 
-globalPowSpec = sum(abs(Wxy),2);
-globalPowSpec_maxnorm = globalPowSpec/ max(globalPowSpec); % Power units indicate cumulative probability
-normlog_globalPowSpec = log2(globalPowSpec);
-blah = normlog_globalPowSpec;
-blah(blah==-inf) = NaN;
-blah = (blah-min(blah))/(max(blah)-min(blah)); % Normalization by subtracting min and dividing by amplitude
-normlog_globalPowSpec = blah;
-[maxtab,~] = peakdet(globalPowSpec_maxnorm, peakDetectionThresh);
-if isempty(maxtab)
-    [maxtab(:,2), maxtab(:,1)] = max(globalPowSpec_maxnorm(:));
-    maxtab = maxtab(1,:);
-end
+% globalPowSpec = sum(abs(Wxy),2);
+% globalPowSpec_maxnorm = globalPowSpec/ max(globalPowSpec); % Power units indicate cumulative probability
+% normlog_globalPowSpec = log2(globalPowSpec);
+% blah = normlog_globalPowSpec;
+% blah(blah==-inf) = NaN;
+% blah = (blah-min(blah))/(max(blah)-min(blah)); % Normalization by subtracting min and dividing by amplitude
+% normlog_globalPowSpec = blah;
+% [maxtab,~] = peakdet(globalPowSpec_maxnorm, peakDetectionThresh);
+% if isempty(maxtab)
+%     [maxtab(:,2), maxtab(:,1)] = max(globalPowSpec_maxnorm(:));
+%     maxtab = maxtab(1,:);
+% end
+% 
+% pv = find(maxtab(:,2)== max(maxtab(:,2)));
+% pf = round(freq(maxtab(pv,1))*100)/100;
 
-pv = find(maxtab(:,2)== max(maxtab(:,2)));
-pf = round(freq(maxtab(pv,1))*100)/100;
 %
 %
 %         %% PLOTTING FIGURES
