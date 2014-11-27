@@ -182,7 +182,7 @@ for fileNum = 1:nFiles
     end
     %%%% Highpass Filtering Signals
 
-    eval(['temp' fstr ' = data' fstr '(:,ch);']); % Leaving light channel out of 'temp'
+    eval(['temp' fstr ' = data' fstr ';']); % Leaving light channel out of 'temp'
     eval(['temp' fstr '(:,extra_pos) = chebfilt(data' fstr '(:,extra_pos),samplingInt,hpf,''high'');']); % Highpassing extracellular signals
     if ~isempty(icc_pos) 
         eval(['temp' fstr '(:,icc_pos) = chebfilt(data' fstr '(:,icc_pos),samplingInt,hpf_icc,''high'');']); % Highpassing intracellular signal(s)

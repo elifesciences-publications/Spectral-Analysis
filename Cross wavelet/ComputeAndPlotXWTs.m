@@ -668,38 +668,38 @@ statMat = [statMat intraIsoVars];
 % end
 
 %% OPTION FOR PHASE PLOTS
-% ButtonName = questdlg('Plot phase distributions?', ...
-%     'Phase distribution', ...
-%     'Yes', 'No', 'No');
-% switch ButtonName,
-%     case 'Yes',
-%         plotphase
-%     case 'No',
-% end %
+ButtonName = questdlg('Plot phase distributions?', ...
+    'Phase distribution', ...
+    'Yes', 'No', 'No');
+switch ButtonName,
+    case 'Yes',
+        plotphase
+    case 'No',
+end %
 
 
 %% NEED FIXING --> The following lines of code need to be fixed to take multidimensional Wxy into acct
 % [mfvec,pfvec] = instantaneouswavefreq(Wxy_iso(:,:,1,1),freq);
 % tvpower = instantaneouswavepow(Wxy_iso(:,:,1,1));
-dynamicfreqpowplot
-plotphase
+% dynamicfreqpowplot
+% plotphase
 
 
 
 %% Creating a Master Structure Variable that Saves All the Important Variables
 
-% answer = questdlg('Save Data?','Saving the Master Variable','No','Yes','No');
+answer = questdlg('Save Data?','Saving the Master Variable','No','Yes','No');
 answer = 'no';
 if strcmpi(answer,'Yes')
     clear mName
-%     [master.Data, master.Time,master.Time_reduced, master.statMat] =...
-%         deal(dataStruct,timeAxisStruct,time_reduced,statMat);
-%     
-%     [master.Wxy, master.Wxy_avg, master.meanPhaseVec, master.maxPhaseVec] =...
-%         deal(Wxy, Wxy_avg, meanPhaseVec, maxPhaseVec);
-%     
-%     [master.samplingInt,master.meanPowVec, master.meanFreqVec, master.maxFreqVec] = ...
-%         deal(samplingInt, tvpower, mfvec, pfvec);
+    [master.Data, master.Time,master.Time_reduced, master.statMat] =...
+        deal(dataStruct,timeAxisStruct,time_reduced,statMat);
+    
+    [master.Wxy, master.Wxy_avg, master.meanPhaseVec, master.maxPhaseVec] =...
+        deal(Wxy, Wxy_avg, meanPhaseVec, maxPhaseVec);
+    
+    [master.samplingInt,master.meanPowVec, master.meanFreqVec, master.maxFreqVec] = ...
+        deal(samplingInt, tvpower, mfvec, pfvec);
     
     tm = repmat(time_reduced(:),1,nFiles);
     tmat = sigMat;
@@ -714,20 +714,4 @@ end
 
 
 
-%% Modifications log
-%%%%% 06.19.13 - Created the Wxy3d structure array.
 
-%% Pending fixes
-% 1) Inscribing 'Power' on colorbar? - I can always do this using 'text'
-% function
-% 2) Ideally, the two signals need to be normalized using normalizepdf.m
-%   provided by Grinsted if the histogram deviates severely from normal.
-% 3) Verify logic for stdFreqs
-% 4) Since sig regions are affected by length of signal it might be
-% beneficial to select a region of the signals from which to calculate
-% sigmax and sigmay
-
-
-% Related Code
-% STIMTRAIN - Generates a stim train
-% PLOTPHASES - Plots of phase distributions
