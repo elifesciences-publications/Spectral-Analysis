@@ -1,4 +1,4 @@
-function n = findpeaks(x)
+function n = findpeaks_hht(x)
 % Find peaks.
 % n = findpeaks(x)
 

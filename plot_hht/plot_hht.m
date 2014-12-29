@@ -9,6 +9,7 @@ function plot_hht(x,Ts)
 % Func : emd
 
 % Get HHT.
+
 imf = emd(x);
 for k = 1:length(imf)
    b(k) = sum(imf{k}.*imf{k});
