@@ -9,7 +9,7 @@ fourier_factor = 1.0330; % Conversion factor for changing wavelet scales to peri
 peakDetectionThreshold = 0.1; % Determines the peak detection for global wavelet spectrum plotted to the right of XWT.
                      % Lower value results in detection of smaller peaks.
                  
-freqRange = [15 30]; % Power for frequencies only within this range will be calculated and displayed
+freqRange = [1 20]; % Power for frequencies only within this range will be calculated and displayed
 
 scaleRange = 1./(freqRange*fourier_factor);
 S0 = min(scaleRange);
