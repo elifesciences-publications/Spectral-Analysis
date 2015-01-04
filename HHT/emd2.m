@@ -11,8 +11,7 @@ while ~ismonotonic(x)
    while (sd > 0.1) | ~isimf(x1)
       s1 = getspline(x1);
       s2 = -getspline(-x1);
-      x2 = x1-(s1+s2)/2;
-      
+      x2 = x1-(s1+s2)/2;      
       sd = sum((x1-x2).^2)/sum(x1.^2);
       x1 = x2;
    end
@@ -42,6 +41,4 @@ function s = getspline(x)
 
 N = length(x);
 p = findpeaks_hht(x);
-% [maxP,~] = peakdet(zscore(x),1);
-% p = maxP(:,1)';
 s = spline([0 p N+1],[0 x(p) 0],1:N);
