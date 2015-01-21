@@ -11,8 +11,7 @@ while ~ismonotonic(x)
    while (sd > 0.1) | ~isimf(x1)
       s1 = getspline(x1);
       s2 = -getspline(-x1);
-      x2 = x1-(s1+s2)/2;
-      
+      x2 = x1-(s1+s2)/2;      
       sd = sum((x1-x2).^2)/sum(x1.^2);
       x1 = x2;
    end

@@ -1,4 +1,4 @@
-function plot_hht3(x,Ts)
+function plot_hht4(x,Ts)
 % Plot the HHT.
 % plot_hht(x,Ts)
 % 
@@ -10,20 +10,20 @@ function plot_hht3(x,Ts)
 
 % Get HHT.
 
-freqRange = [10 300];
+freqRange = [10 100];
 dj = 2;
 
 %% Downsampling signal to increase computation speed
 dt = 1/max(4*freqRange);
 dInds = floor(dt/Ts);
 x = x(1:dInds:end);
-kerWid = 4;
+kerWid = 3;
 ker = gausswin(kerWid);
 x = conv2(x(:),ker(:),'same');
 Ts = dt;
 
 
-imf = emd(x);
+imf = emd2(x);
 I = cell2mat(imf);
 for k = 1:length(imf)
    b(k) = sum(imf{k}.*imf{k});
