@@ -1,7 +1,7 @@
 function varargout = ComputeXWT(varargin)
 
 % My custom written XWT based on xwt.m by Grinsted et al
-% [Wxy,period,scale,coi,sig95] = ComputeXWT(x,y,time,freqRange,dj,stringency,phaseType);
+% [Wxy,freq,coi,sig95] = ComputeXWT(x,y,time,freqRange,dj,stringency,phaseType);
 
 %% Fixed and variable parameters
 fourier_factor      = 1.0330; % Conversion factor for changing wavelet scales to periods (true for wavenumber = 6)
@@ -40,9 +40,9 @@ else
     return;
 end
 
-x = varargin{1};
-y = varargin{2};
-time = varargin{3};
+x = varargin{1}; x = x(:);
+y = varargin{2}; y = y(:);
+time = varargin{3}; time = time(:);
 samplingInt = mode(diff(time));
 
 freqRange = varargin{4}; % Power for frequencies only within this range will be calculated and displayed
@@ -112,9 +112,10 @@ else
 end
 
 varargout{1} = Wxy;
-varargout{2} = period;
+varargout{2} = freq;
 varargout{3} = coi;
 varargout{4} = sig95;
+
 
 end
 %% Global Power Spectrum
