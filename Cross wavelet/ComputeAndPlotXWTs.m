@@ -21,7 +21,7 @@
 
 %% Wavelet Parameters
 
-wavelet_scale_resolution = 1/2^7; % (Must at least be 1/10)
+wavelet_scale_resolution = 1/2^6; % (Must at least be 1/10)
 number_of_phase_bins = 90; % Number of bins for phase histograms
 motherWavelet = 'Morlet'; %%%('Morlet', 'Paul','DOG') - For now use only Morlet, other wavelets will give erroneous results
 avgCheck =0;
