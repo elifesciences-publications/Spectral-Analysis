@@ -62,6 +62,9 @@ end
 % s = ((s1+s2)/2)';
 
 timeVec = varargin{2};
+signal = signal(:);
+pks_min = findpeaks_hht(-signal);
+
 % f_max = findpeaks_hht(signal);
 % f_min = findpeaks_hht(signal);
 % f_all = union(f_min(:), f_max(:));
@@ -71,7 +74,7 @@ timeVec = varargin{2};
 % s = (s1+s2)/2;
 % s = interp1(timeVec(f_all),signal(f_all), timeVec);
 signal = signal(:);
-s = signal;
+
 
 
 if ndims(signal)> 2
@@ -79,9 +82,9 @@ if ndims(signal)> 2
 elseif size(signal,2) > 2
     errordlg('Signal input must be a matrix with no more than 2 cols, with each col being a different timeseries!')
 elseif any(size(signal)==1)
-    [Wxy,freq,coi, sig95]  = ComputeXWT(s,s,timeVec,freqRange,dj,stringency,phaseType);
+    [Wxy,freq,coi, sig95]  = ComputeXWT(signal,signal,timeVec,freqRange,dj,stringency,phaseType);
 else
-    [Wxy,freq,coi, sig95]  = ComputeXWT(s(:,1),s(:,2),timeVec,freqRange,dj,stringency,phaseType);
+    [Wxy,freq,coi, sig95]  = ComputeXWT(signal(:,1),signal(:,2),timeVec,freqRange,dj,stringency,phaseType);
 end
 % s_norm = s/max(s);
 % s_norm = log2(s);
