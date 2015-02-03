@@ -56,7 +56,13 @@ end
 signal = varargin{1};
 if any(size(signal)==1)
     signal = signal(:)';
+[~, ~, sigmaX] = ZscoreByHist(signal);
+elseif size(signal,1) == 2
+signals = signal';
+[~, ~, sigmaX] = ZscoreByHist(signal(:,1));
+[~, ~, sigmaY] = ZscoreByHist(signal(:,2));
 end
+
 % s1 = getspline(signal);
 % s2 = getspline(-signal);
 % s = ((s1+s2)/2)';
@@ -70,8 +76,8 @@ timeVec = varargin{2};
 % some weird stuff at high frequencies
 % s = (s1+s2)/2;
 % s = interp1(timeVec(f_all),signal(f_all), timeVec);
-signal = signal(:);
-s = signal;
+
+
 
 
 if ndims(signal)> 2
@@ -79,10 +85,11 @@ if ndims(signal)> 2
 elseif size(signal,2) > 2
     errordlg('Signal input must be a matrix with no more than 2 cols, with each col being a different timeseries!')
 elseif any(size(signal)==1)
-    [Wxy,freq,coi, sig95]  = ComputeXWT(s,s,timeVec,freqRange,dj,stringency,phaseType);
+    [Wxy,freq,coi, sig95]  = ComputeXWT(signal,signal,timeVec,freqRange,dj,stringency,phaseType);
 else
-    [Wxy,freq,coi, sig95]  = ComputeXWT(s(:,1),s(:,2),timeVec,freqRange,dj,stringency,phaseType);
+    [Wxy,freq,coi, sig95]  = ComputeXWT(signal(:,1),signal(:,2),timeVec,freqRange,dj,stringency,phaseType);
 end
+Wxy = Wxy./(si)
 % s_norm = s/max(s);
 % s_norm = log2(s);
 % sigMat = repmat(s(:)',size(Wxy,1),1);

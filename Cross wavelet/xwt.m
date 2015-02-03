@@ -116,10 +116,12 @@ switch lower(sigma_extent)
         sigmay=std(y(fpt:lpt,2));
     case 'full'
         % %nx=size(x,1);
-        sigmax=std(x(:,2));
-        %
-        % %ny=size(y,1);
-        sigmay=std(y(:,2));
+%         sigmax=std(x(:,2));
+%         %
+%         % %ny=size(y,1);
+%         sigmay=std(y(:,2));
+          [~,~,sigmax] = ZscoreByHist(x(:,2));
+          [~,~,sigmay] = ZscoreByHist(y(:,2));
 end
 
 
