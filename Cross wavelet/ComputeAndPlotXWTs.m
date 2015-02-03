@@ -61,7 +61,7 @@ clear tempSig
 for fileNum = 1:nFiles
     for chNum = 1:size(sigMat,3)
         eval(['sigMat(:,fileNum,chNum)= signal' num2str(fileNum) '(:,chNum);'])
-        sigmas(fileNum,chNum) = std(sigMat(:,fileNum,chNum));
+        [~,~,sigmas(fileNum,chNum)] = ZscoreByHist(sigMat(:,fileNum,chNum));
     end
 end
 %% Mean of Standard Deviation of all Signals
