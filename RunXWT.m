@@ -3,7 +3,7 @@
 % custom-written scripts are also executed in the process.
 
 addpath(genpath('C:\Users\pujalaa\Documents\MATLAB\General'));
-addpath(genpath('C:\Users\pujalaa\Documents\MATLAB\Wavelet'));
+addpath(genpath('C:\Users\pujalaa\Documents\MATLAB\Spectral-Analysis'));
 
 %% Load Multiple Files at Once and Create a Single Large Data Structure
 % Use loadfiles instead of mfload to singly load data from files into
