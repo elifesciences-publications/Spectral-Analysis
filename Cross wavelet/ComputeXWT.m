@@ -86,10 +86,12 @@ end
 % clear Wxy3d % 3D array with stacking Wxy matrices generated for each pair of channels from each file along the z-dimension
 % clear sigxy
 
+
 x = [time(:) x(:)];
 y = [time(:) y(:)];
 [Wxy,period,~,coi,sig95]= xwt(x,y,Pad, dj,'S0',S0, 'ms',MaxScale, 'Mother', motherWavelet);
 freq =1./period;
+
 
 %% Removing regions outside COI
 ftmat = repmat(freq(:), 1, length(time));

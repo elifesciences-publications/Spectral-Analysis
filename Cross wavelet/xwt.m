@@ -115,11 +115,11 @@ switch lower(sigma_extent)
         sigmax=std(x(fpt:lpt,2));
         sigmay=std(y(fpt:lpt,2));
     case 'full'
-<<<<<<< HEAD
+
         [~,~,sigmax] = ZscoreByHist(x(:,2)); % Added on 2-2-2015 (provides better estimation than std(x(:,2)))
         [~,~,sigmay] = ZscoreByHist(y(:,2));
 
-=======
+
         % %nx=size(x,1);
 %         sigmax=std(x(:,2));
 %         %
@@ -127,7 +127,7 @@ switch lower(sigma_extent)
 %         sigmay=std(y(:,2));
           [~,~,sigmax] = ZscoreByHist(x(:,2));
           [~,~,sigmay] = ZscoreByHist(y(:,2));
->>>>>>> 3bdde9a4d092cfb1037abb3323261d65e44cde8c
+
 end
 
 
