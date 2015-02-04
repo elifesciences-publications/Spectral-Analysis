@@ -54,8 +54,10 @@ else
     plotSwitch = varargin{7};
 end
 signal = varargin{1};
-if any(size(signal)==1)
-    signal = signal(:)';
+if any(size(signal))==1
+    signal = signal(:);
+elseif size(signal,1)==2
+    signal = signal'; % So as to make arrange the different signals along columns
 end
 % s1 = getspline(signal);
 % s2 = getspline(-signal);
@@ -70,9 +72,18 @@ timeVec = varargin{2};
 % some weird stuff at high frequencies
 % s = (s1+s2)/2;
 % s = interp1(timeVec(f_all),signal(f_all), timeVec);
-signal = signal(:);
-s = signal;
 
+% s = zeros(size(signal));
+% for cc = 1:size(signal,2);
+%     [~,s_min,~] = SubtractMinimalEnvelope(signal(:,cc));
+%     [~,s_max,~] = SubtractMinimalEnvelope(-signal(:,cc));
+%     blah = (s_min(:) - s_max(:))/2;
+%     [~,s_min,~] = SubtractMinimalEnvelope(blah);
+%     [~,s_max,~] = SubtractMinimalEnvelope(-blah);
+%     s(:,cc)  = signal(:,cc) - (s_min(:) - s_max(:))/2;
+% end
+
+s = signal;
 
 if ndims(signal)> 2
     errordlg('Input signal size cannot exceed 2 dimensions!');
@@ -83,6 +94,7 @@ elseif any(size(signal)==1)
 else
     [Wxy,freq,coi, sig95]  = ComputeXWT(s(:,1),s(:,2),timeVec,freqRange,dj,stringency,phaseType);
 end
+
 % s_norm = s/max(s);
 % s_norm = log2(s);
 % sigMat = repmat(s(:)',size(Wxy,1),1);
@@ -90,11 +102,15 @@ R = zeros(size(Wxy));
 % B = log2(abs(Wxy)).*sigMat;
 % B = log2(abs(Wxy));
 B = abs(Wxy).^1;
+
 for tt = 1:size(B,2)
     blah = B(:,tt);
+    blah = SubtractMinimalEnvelope(blah);
     dBlah = diff(blah);
     peaks = dBlah(1:end-1)>0 & dBlah(2:end)<=0;
     peakInds = find(peaks);
+    blah = blah./max(blah);
+    peakInds(blah(peakInds)<0.75)=[];
     R(peakInds,tt) = B(peakInds,tt);
 end
 
