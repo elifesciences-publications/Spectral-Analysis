@@ -51,7 +51,15 @@ switch nargin
             errordlg('Freq Range input must contain at least 2 values!')
             return;
         end
+         colorMap = hot;
     case 5
+        if numel(varargin{2})==1; % Assuming this is sampling interval
+            samplingInt = varargin{2};
+            time = (0:length(x)-1)*samplingInt;
+        else
+            time = varargin{2};
+            samplingInt = mode(diff(time));
+        end
         thresh = varargin{3};
         freqRange = varargin{4};
         if numel(freqRange) < 2
@@ -93,8 +101,12 @@ t1 = time(pks1);
 f1 = 1./diff(t1);
 t_adj = (t1(1:end-1) + t1(2:end))/2;
 t1 = t_adj;
+outInds = find(t1 > time(end));
+t1(outInds)=[];
 amp_adj = abs(sqrt(amp1(1:end-1).*amp1(2:end))); % Geometric mean of a point and the next
 amp1 = amp_adj;
+amp1(outInds)=[];
+f1(outInds)=[];
 outInds = find(f1 > freqRange(2) | f1 < freqRange(1));
 f1(outInds) = [];
 t1(outInds) =[];
@@ -108,8 +120,12 @@ t2 = time(pks2);
 f2 = 1./diff(t2);
 t_adj = (t2(1:end-1) + t2(2:end))/2;
 t2 = t_adj;
+outInds = find(t2 > time(end));
+t2(outInds)=[];
 amp_adj = abs(sqrt(amp2(1:end-1).*amp2(2:end))); % Geometric mean of a point and the next
 amp2 = amp_adj;
+amp2(outInds)=[];
+f2(outInds)=[];
 outInds = find(f2 > freqRange(2) | f2 < freqRange(1));
 t2(outInds) =[];
 f2(outInds) = [];
@@ -120,10 +136,15 @@ pks3(amp3 < thresh/4)= [];
 amp3(amp3 < thresh/4) = [];
 t3 = time(pks3);
 f3 = 1./diff(t3);
-t_adj = (t2(1:end-1) + t2(2:end))/2;
-t2 = t_adj;
+t_adj = (t3(1:end-1) + t3(2:end))/2;
+t3 = t_adj;
+outInds = find(t3 > time(end));
+t3(outInds)=[];
 amp_adj = abs(sqrt(amp1(1:end-1).*amp1(2:end))); % Geometric mean of a point and the next
 amp1 = amp_adj;
+amp1(outInds)=[];
+f1(outInds)=[];
+
 outInds = find(f3 > freqRange(2) | f3 < freqRange(1));
 t3(outInds) =[];
 f3(outInds) = [];
@@ -135,7 +156,16 @@ f_all = [f1(:); f2(:); f3(:)];
 amp_all = [amp1(:); amp2(:); amp3(:)];
 S = [t_all f_all amp_all];
 
-[colVals,LUT,cmap_new] = MapValsToColors(amp_all,colorMap);
+weakInds = find(amp_all < (0.1*max(amp_all)));
+S(weakInds,:)=[];
+
+
+%  [colVals,LUT,cmap_new] = MapValsToColors(S(:,3),colorMap);
+
+colVals = MapValsToColorsVer4(S(:,3),colorMap);
+%  cmap_new = cmap;
+
+
 
 figure('Name','Mimal Spectrogram')
 subaxis(2,1,1,'mb',0.1,'mt', 0.1)
@@ -151,10 +181,10 @@ hold on
 set(gca,'color','k','tickdir','out'), box off
 ylabel('Frequency (Hz)'), xlabel('Time (sec)')
 ylim(freqRange), xlim([time(1) time(end)])
-for jj = 1:length(t_all)
-    plot(t_all(jj),f_all(jj),'color',colVals(jj,:),'marker','o','markersize',5,'markerfacecolor',colVals(jj,:))
+for jj = 1:size(S,1)
+    plot(S(jj,1),S(jj,2),'color',colVals(jj,:),'marker','o','markersize',5,'markerfacecolor',colVals(jj,:))
 end
-colormap(cmap_new)
+% colormap(cmap_new)
 ch = colorbar;
 set(ch,'location','NorthOutside')
 
