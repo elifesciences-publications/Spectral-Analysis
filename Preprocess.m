@@ -237,8 +237,8 @@ for fileNum = 1:nFiles
             eval(['signal' fstr '(f)=0;'])
         end
         
-        eval(['signal' fstr '(:,extra_pos)=chebfilt(signal' fstr...
-            '(:,extra_pos).^2,samplingInt,lpf,''low'');']) % Lowpasses extracellular signals
+        eval(['signal' fstr '(:,extra_pos) = (chebfilt(signal' fstr...
+            '(:,extra_pos).^1,samplingInt,lpf,''low'')).^(1);']) % Lowpasses extracellular signals
         if ~isempty(icc_pos)
              eval(['signal' fstr '(:,icc_pos)=chebfilt(signal' fstr...
             '(:,icc_pos),samplingInt,lpf_icc,''low'');']) % Lowpasses intracellular signals
