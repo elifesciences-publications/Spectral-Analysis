@@ -109,19 +109,23 @@ end
 switch lower(sigma_extent)
     case 'select'
         fig = figure(101); plot(x(:,2)), hold on, plot(y(:,2),'r')
-        [a,b] = ginput(2);
+        [a,~] = ginput(2);
         fpt = round(a(1)); lpt = round(a(2));
         close(fig)
         sigmax=std(x(fpt:lpt,2));
         sigmay=std(y(fpt:lpt,2));
     case 'full'
+
+        [~,~,sigmax] = ZscoreByHist(x(:,2)); % Added on 2-2-2015 (provides better estimation than std(x(:,2)))
+        [~,~,sigmay] = ZscoreByHist(y(:,2));
+
+
         % %nx=size(x,1);
 %         sigmax=std(x(:,2));
 %         %
 %         % %ny=size(y,1);
 %         sigmay=std(y(:,2));
-          [~,~,sigmax] = ZscoreByHist(x(:,2));
-          [~,~,sigmay] = ZscoreByHist(y(:,2));
+   
 end
 
 
@@ -143,7 +147,7 @@ coiy=coiy(idx);
 coi=min(coix,coiy);
 
 % -------- Cross
-Wxy=X.*conj(Y);
+Wxy=(X.*conj(Y))/(sigmax*sigmay); % Added on 2-2-2015
 
 
 

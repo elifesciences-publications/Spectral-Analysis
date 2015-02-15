@@ -86,10 +86,14 @@ end
 % clear Wxy3d % 3D array with stacking Wxy matrices generated for each pair of channels from each file along the z-dimension
 % clear sigxy
 
+
 x = [time(:) x(:)];
 y = [time(:) y(:)];
 [Wxy,period,~,coi,sig95]= xwt(x,y,Pad, dj,'S0',S0, 'ms',MaxScale, 'Mother', motherWavelet);
 freq =1./period;
+[~,~,sigmaX] = ZscoreByHist(x(:,2));
+[~,~,sigmaY] = ZscoreByHist(y(:,2));
+Wxy = Wxy./(sigmaX*sigmaY);
 
 %% Removing regions outside COI
 ftmat = repmat(freq(:), 1, length(time));
@@ -97,7 +101,8 @@ coimat = repmat(1./coi(:)',length(freq), 1);
 Wxy(ftmat < coimat) = 0; % Removing regions outside of COI
 
 %% Removing insignificant points
-Wxy(sig95 < stringency) = 0;
+% Wxy(sig95 < stringency) = 0;
+Wxy(abs(Wxy) < stringency)= 0;
 
 %% Phase-based filtering
 a  = angle(Wxy);
