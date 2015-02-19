@@ -102,7 +102,7 @@ R = zeros(size(Wxy));
 % B = log2(abs(Wxy)).*sigMat;
 % B = log2(abs(Wxy));
 B = abs(Wxy).^1;
-
+Wxy = Wxy.^2;
 for tt = 1:size(B,2)
     blah = B(:,tt);
     blah = SubtractMinimalEnvelope(blah);
