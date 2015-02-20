@@ -68,7 +68,7 @@ end
 b = mean(sigmas,1);
 c = repmat(b,size(sigmas,1),1);
 sigmas_prenorm = sigmas;
-sigmas = c;
+sigmas = c; % So, the only time sigmas will differ from sigmas_prenorm is of multiple files are loaded
 
 %% Truncating the signal matrix and filtering
 firstTime = time(1); lastTime = time(end);
@@ -364,8 +364,7 @@ for fileNum = 1:nFiles % File Number Loop # 1
         
         
         %% PLOTTING FIGURES
-        
-        if lower(figdisp) =='y'
+            if lower(figdisp) =='y'
             
             figure('Name', ['XW Power, File ' num2str(fileNum) ', Channels '...
                 num2str(ch(chNum)) ' vs ' num2str(ch(chNum+1))],'color','w','renderer','painter')

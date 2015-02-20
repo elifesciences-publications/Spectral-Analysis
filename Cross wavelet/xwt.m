@@ -146,9 +146,10 @@ coiy=coiy(idx);
 
 coi=min(coix,coiy);
 
-% -------- Cross
-Wxy=(X.*conj(Y))/(sigmax*sigmay); % Added on 2-2-2015
 
+% -------- Cross
+% Wxy=(X.*conj(Y))/(sigmax*sigmay); % Added on 2-2-2015
+Wxy=(X.*conj(Y));
 
 
 % sinv=1./(scale');
@@ -179,9 +180,10 @@ switch lower(noise_type)
         Pky=ar1spectrum_ap(0,period);
 end
 
-V=2;
+V=1;
 Zv=3.9999; %(default:Zv = 3.999; Grinsted et al., 2004, eqn (5))
 signif=sigmax*sigmay*sqrt(Pkx.*Pky)*Zv/V; % Eqn (5)
+% signif = sqrt(Pkx.*Pky)*Zv/V; % Eqn (5)
 % save mat signif Pkx Pky
 sig95 = (signif')*(ones(1,n));  % expand signif --> (J+1)x(N) array
 sig95 = abs(Wxy) ./ sig95;
