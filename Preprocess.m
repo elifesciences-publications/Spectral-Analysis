@@ -199,7 +199,7 @@ for fileNum = 1:nFiles
         errordlg('Signal Filtering Error! Please re-specify the time range')
     end
     
-    if lower(threshdenoising) == 'y';
+    if strcmpi(threshdenoising,'y') 
         eval(['temp' fstr ' = chebfilt(overthreshremove(temp' fstr...
             ',time),samplingInt,hpf,''high'');']); % Manually chops
         %         % ... off stim artifacts that were not properly removed.
@@ -255,6 +255,45 @@ for fileNum = 1:nFiles
     
     if ~isempty(icc_pos)
         eval(['signal' fstr '(:,icc_pos)=chebfilt(signal' fstr...
+
+        %%%% Removing 60Hz noise
+        if strcmpi(denoise,'y') 
+            eval(['temp' fstr ' = double(temp' fstr ');']);
+            eval(['temp' fstr '=chebfilt(temp' fstr...
+                ',samplingInt,stopband,''stop'');']) %%%%% Stopbands
+            %%%% Filtfilt.m Error Message
+            blah = eval(['temp' fstr ';']);
+            if any(isnan(blah(:)))
+                errordlg('Signal Filtering Error! Please re-specify the time range')
+            end
+        end
+        
+        eval(['signal' fstr '=temp' fstr ';'])
+        
+        %%%% Filtfilt.m Error Message
+        blah = eval(['temp' fstr ';']);
+        if any(isnan(blah(:)))
+            errordlg('Signal Filtering Error! Please re-specify the time range')
+        end
+        
+        %%%% Signal Rectification or absolute values
+        if hpf >= 20 % Rectification only when signal is highpassed over 20Hz
+            %%%%%%%% Use these lines for half-wave rectification %%%%%%
+%             clear f
+%             eval(['f = signal' fstr ';']);
+%             eval(['f(:,extra_pos) = signal' fstr '(:,extra_pos)<0;'])
+%             eval(['signal' fstr '(f)=0;'])
+           %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+           %%%%%% Altneratively, use this for absolute values %%%% 
+            eval(['signal' fstr ' = abs(signal' fstr ');'])
+           %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        end
+        
+        eval(['signal' fstr '(:,extra_pos) = (chebfilt(signal' fstr...
+            '(:,extra_pos).^1,samplingInt,lpf,''low'')).^(1);']) % Lowpasses extracellular signals
+        if ~isempty(icc_pos)
+             eval(['signal' fstr '(:,icc_pos)=chebfilt(signal' fstr...
+>>>>>>> b5ff1523529d2b2c6ac4c13c93eac1d31308dc48
             '(:,icc_pos),samplingInt,lpf_icc,''low'');']) % Lowpasses intracellular signals
     end
     

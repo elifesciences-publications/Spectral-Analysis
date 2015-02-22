@@ -1,4 +1,4 @@
-function varargout = ComputeSparseSpectrogram(varargin)
+function S = ComputeSparseSpectrogram2(varargin)
 %ComputeSparseSpectrogram - In addition to plotting, returns a
 % sparse spectrogram that is computed using minimal EMD (Empirical Mode Decomposition).
 % Frequencies are computed by detecting peaks of minimal (1 iteration, 3 decompositions)
@@ -188,13 +188,11 @@ t3(weakInds) = [];
 t_all = [t1(:); t2(:); t3(:)];
 f_all = [f1(:); f2(:); f3(:)];
 amp_all = [amp1(:); amp2(:); amp3(:)];
-pks_all = [pks1(:); pks2(:); pks3(:)];
 
 %% Arrange all values in chronological order.
 [t_all,inds] = sort(t_all,'ascend');
 f_all = f_all(inds);
 amp_all = amp_all(inds);
-pks_all = pks_all(inds);
 
 inds = zeros(size(t_all));
 for jj = 2:length(t_all)
@@ -202,7 +200,6 @@ for jj = 2:length(t_all)
         t_all(jj-1) = median([t_all(jj), t_all(jj-1)]);
         f_all(jj-1) = mean([f_all(jj), f_all(jj-1)]);
         amp_all(jj-1) = mean([amp_all(jj), amp_all(jj-1)]);
-        pks_all(jj-1) = round(mean([pks_all(jj), pks_all(jj-1)]));
         inds(jj) = jj;
     end
 end
@@ -210,10 +207,7 @@ inds(inds ==0)=[];
 t_all(inds) = [];
 f_all(inds) = [];
 amp_all(inds) = [];
-pks_all(inds) = [];
-S = [t_all f_all amp_all, pks_all];
-
-varargout{1} = S;
+S = [t_all f_all amp_all];
 
 % weakInds = find(amp_all < (0.08*max(amp_all)));
 % S(weakInds,:)=[];
@@ -246,16 +240,6 @@ end
 colormap(colorMap)
 ch = colorbar;
 set(ch,'location','NorthOutside')
-
-
-if nargout == 2
-    freqVec  = zeros(size(time));
-    ampVec = zeros(size(time));
-    freqVec(pks_all) = f_all;
-    ampVec(pks_all) = amp_all;
-    SS =[freqVec(:), ampVec(:)]; 
-    varargout{2} = SS;
-end
 
 
 
