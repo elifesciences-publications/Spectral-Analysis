@@ -239,7 +239,8 @@ subaxis(2,1,2,'mt',0.001,'mb',0.1)
 hold on
 set(gca,'color','k','tickdir','out'), box off
 ylabel('Frequency (Hz)'), xlabel('Time (sec)')
-ylim(freqRange), xlim([time(1) time(end)])
+axis([time(1) time(end) min(f_all) max(f_all)])
+% ylim(freqRange), xlim([time(1) time(end)])
 for jj = 1:size(S,1)
     plot(S(jj,1),S(jj,2),'color',colVals(jj,:),'marker','o','markersize',5,'markerfacecolor',colVals(jj,:))
 end
