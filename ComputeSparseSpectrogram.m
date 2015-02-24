@@ -135,6 +135,7 @@ t1 = t_adj;
 pks1 = round((pks1(1:end-1) + pks1(2:end))/2);
 outInds = find(t1 > time(end));
 t1(outInds)=[];
+
 amp_adj = abs(sqrt(amp1(1:end-1).*amp1(2:end))); % Geometric mean of a point and the next
 amp1 = amp_adj;
 amp1(outInds)=[];
