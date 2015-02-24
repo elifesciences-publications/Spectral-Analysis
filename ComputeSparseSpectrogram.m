@@ -4,8 +4,8 @@ function varargout = ComputeSparseSpectrogram(varargin)
 % Frequencies are computed by detecting peaks of minimal (1 iteration, 3 decompositions)
 % IMFs (Intrinsic Mode Functions).
 %
-% S = ComputeSparseSpectrogram(signal,timeVec,peakDetThresh,freqRange,colorMap)
-% S = ComputeSparseSpectrogram(signal,samplingInt,peakDetThresh,freqRange,colorMap)
+% S = ComputeSparseSpectrogram(signal,timeVec,peakDetThresh,freqRange,colorMap,plotOrNot)
+% S = ComputeSparseSpectrogram(signal,samplingInt,peakDetThresh,freqRange,colorMap,plotOrNot)
 
 x = varargin{1};
 if all(size(x)> 1)
@@ -29,7 +29,8 @@ switch nargin
         thresh = 5;
         freqRange(1) = 0.5/(length(x)*samplingInt);
         freqRange(2) = 1./(2*samplingInt);
-        colorMap = hot;
+        colorMap = hot; close
+        plotOrNot = 'y';
     case 3
           if numel(varargin{2})==1; % Assuming this is sampling interval
             samplingInt = varargin{2};
@@ -41,7 +42,8 @@ switch nargin
         thresh = varargin{3};
         freqRange(1) = 0.5/(length(x)*samplingInt);
         freqRange(2) = 1/(2*samplingInt);
-        colorMap = hot;
+        colorMap = hot; close
+        plotOrNot = 'y';
     case 4
           if numel(varargin{2})==1; % Assuming this is sampling interval
             samplingInt = varargin{2};
@@ -56,7 +58,8 @@ switch nargin
             errordlg('Freq Range input must contain at least 2 values!')
             return;
         end
-         colorMap = hot;
+         colorMap = hot; close
+         plotOrNot = 'y';
     case 5
         if numel(varargin{2})==1; % Assuming this is sampling interval
             samplingInt = varargin{2};
@@ -71,7 +74,24 @@ switch nargin
             errordlg('Freq Range input must contain at least 2 values!')
             return;
         end
-        colorMap = varargin{5};
+        colorMap = varargin{5}; close
+        plotOrNot = 'y';
+    case 6
+        if numel(varargin{2})==1; % Assuming this is sampling interval
+            samplingInt = varargin{2};
+            time = (0:length(x)-1)*samplingInt;
+        else
+            time = varargin{2};
+            samplingInt = mode(diff(time));
+        end
+        thresh = varargin{3};
+        freqRange = varargin{4};
+        if numel(freqRange) < 2
+            errordlg('Freq Range input must contain at least 2 values!')
+            return;
+        end
+        colorMap = varargin{5}; close
+        plotOrNot = varargin{6};
 end
 
 if length(time)~= length(x)
@@ -92,6 +112,7 @@ end
 
 
 %% Getting 3 IMFs using cubic interpolation
+
 [imf1,r1,pks1] = GetCubic(x);
 amp1 = abs(imf1(pks1));
 
@@ -102,7 +123,9 @@ amp2 = abs(imf2(pks2));
 amp3 = abs(imf3(pks3));
 
 
+maxFrac = 0.1;
 %% Frequency from IMF1
+thresh = mean(amp1) + std(amp1);
 pks1(amp1 < thresh)= [];
 amp1(amp1 < thresh) = [];
 t1 = time(pks1);
@@ -123,15 +146,16 @@ t1(outInds) =[];
 amp1(outInds) = [];
 pks1(outInds)=[];
 
-weakInds = find(amp1 < (0.2*max(amp1)));
+weakInds = find(amp1 < (maxFrac*max(amp1)));
 amp1(weakInds)=[];
 pks1(weakInds) = [];
 f1(weakInds) = [];
 t1(weakInds) = [];
 
 %% Frequency from IMF2
-pks2(amp2 < thresh/2)= [];
-amp2(amp2 < thresh/2) = [];
+thresh = mean(amp2) + 0.5*std(amp2);
+pks2(amp2 < thresh/20)= [];
+amp2(amp2 < thresh/20) = [];
 t2 = time(pks2);
 f2 = 1./diff(t2);
 t_adj = (t2(1:end-1) + t2(2:end))/2;
@@ -150,15 +174,16 @@ f2(outInds) = [];
 amp2(outInds) = [];
 pks2(outInds) =[];
 
-weakInds = find(amp2 < (0.1*max(amp2)));
+weakInds = find(amp2 < (0.25*maxFrac*max(amp2)));
 amp2(weakInds)=[];
 pks2(weakInds) = [];
 f2(weakInds) = [];
 t2(weakInds) = [];
 
 %% Frequency from IMF3
-pks3(amp3 < thresh/4)= [];
-amp3(amp3 < thresh/4) = [];
+thresh = mean(amp3) + 0.25*std(amp3);
+pks3(amp3 < thresh/40)= [];
+amp3(amp3 < thresh/40) = [];
 t3 = time(pks3);
 f3 = 1./diff(t3);
 t_adj = (t3(1:end-1) + t3(2:end))/2;
@@ -177,7 +202,7 @@ f3(outInds) = [];
 amp3(outInds) = [];
 pks3(outInds) = [];
 
-weakInds = find(amp3 < (0.05*max(amp3)));
+weakInds = find(amp3 < (0.25*maxFrac*max(amp3)));
 amp3(weakInds)=[];
 pks3(weakInds) = [];
 f3(weakInds) = [];
@@ -201,7 +226,7 @@ for jj = 2:length(t_all)
     if (t_all(jj) - t_all(jj-1)) <= (2*samplingInt) && (f_all(jj) - f_all(jj-1) <=2)
         t_all(jj-1) = median([t_all(jj), t_all(jj-1)]);
         f_all(jj-1) = mean([f_all(jj), f_all(jj-1)]);
-        amp_all(jj-1) = mean([amp_all(jj), amp_all(jj-1)]);
+        amp_all(jj-1) = sqrt(amp_all(jj)* amp_all(jj-1));
         pks_all(jj-1) = round(mean([pks_all(jj), pks_all(jj-1)]));
         inds(jj) = jj;
     end
@@ -211,7 +236,7 @@ t_all(inds) = [];
 f_all(inds) = [];
 amp_all(inds) = [];
 pks_all(inds) = [];
-S = [t_all f_all amp_all, pks_all];
+S = [f_all amp_all, pks_all,t_all];
 
 varargout{1} = S;
 
@@ -221,32 +246,33 @@ varargout{1} = S;
 
 %  [colVals,LUT,cmap_new] = MapValsToColors(S(:,3),colorMap);
 
-colVals = MapValsToColorsVer4(S(:,3),colorMap);
+colVals = MapValsToColorsVer4(S(:,2),colorMap);
 %  cmap_new = cmap;
 
 
-
-figure('Name','Mimal Spectrogram')
-subaxis(2,1,1,'mb',0.1,'mt', 0.1)
-hold on
-set(gca,'color','k','tickdir','out', 'xtick',[]), box off
-plot(time,x,'color','g')
-title('Minimal Spectrogram')
-ylabel('Amp (z-scores)')
-ylim([-inf inf]), xlim([time(1) time(end)])
-hold off
-subaxis(2,1,2,'mt',0.001,'mb',0.1)
-hold on
-set(gca,'color','k','tickdir','out'), box off
-ylabel('Frequency (Hz)'), xlabel('Time (sec)')
-axis([time(1) time(end) min(f_all) max(f_all)])
-% ylim(freqRange), xlim([time(1) time(end)])
-for jj = 1:size(S,1)
-    plot(S(jj,1),S(jj,2),'color',colVals(jj,:),'marker','o','markersize',5,'markerfacecolor',colVals(jj,:))
+if strcmpi(plotOrNot,'y')
+    figure('Name','Mimal Spectrogram')
+    subaxis(2,1,1,'mb',0.1,'mt', 0.1)
+    hold on
+    set(gca,'color','k','tickdir','out', 'xtick',[]), box off
+    plot(time,x,'color','g')
+    title('Minimal Spectrogram')
+    ylabel('Amp (z-scores)')
+    ylim([-inf inf]), xlim([time(1) time(end)])
+    hold off
+    subaxis(2,1,2,'mt',0.001,'mb',0.1)
+    hold on
+    set(gca,'color','k','tickdir','out'), box off
+    ylabel('Frequency (Hz)'), xlabel('Time (sec)')
+    axis([time(1) time(end) min(f_all) max(f_all)])
+    % ylim(freqRange), xlim([time(1) time(end)])
+    for jj = 1:size(S,1)
+        plot(S(jj,4),S(jj,2),'color',colVals(jj,:),'marker','o','markersize',5,'markerfacecolor',colVals(jj,:))
+    end
+    colormap(colorMap)
+    ch = colorbar;
+    set(ch,'location','NorthOutside')
 end
-colormap(colorMap)
-ch = colorbar;
-set(ch,'location','NorthOutside')
 
 
 if nargout == 2
