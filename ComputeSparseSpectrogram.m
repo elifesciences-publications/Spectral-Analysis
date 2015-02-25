@@ -29,7 +29,7 @@ switch nargin
         thresh = 5;
         freqRange(1) = 0.5/(length(x)*samplingInt);
         freqRange(2) = 1./(2*samplingInt);
-        colorMap = hot; close
+        colorMap = hot; 
         plotOrNot = 'y';
     case 3
           if numel(varargin{2})==1; % Assuming this is sampling interval
@@ -42,7 +42,7 @@ switch nargin
         thresh = varargin{3};
         freqRange(1) = 0.5/(length(x)*samplingInt);
         freqRange(2) = 1/(2*samplingInt);
-        colorMap = hot; close
+        colorMap = hot; 
         plotOrNot = 'y';
     case 4
           if numel(varargin{2})==1; % Assuming this is sampling interval
@@ -58,7 +58,7 @@ switch nargin
             errordlg('Freq Range input must contain at least 2 values!')
             return;
         end
-         colorMap = hot; close
+         colorMap = hot;
          plotOrNot = 'y';
     case 5
         if numel(varargin{2})==1; % Assuming this is sampling interval
@@ -74,7 +74,7 @@ switch nargin
             errordlg('Freq Range input must contain at least 2 values!')
             return;
         end
-        colorMap = varargin{5}; close
+        colorMap = varargin{5};
         plotOrNot = 'y';
     case 6
         if numel(varargin{2})==1; % Assuming this is sampling interval
@@ -90,7 +90,7 @@ switch nargin
             errordlg('Freq Range input must contain at least 2 values!')
             return;
         end
-        colorMap = varargin{5}; close
+        colorMap = varargin{5}; 
         plotOrNot = varargin{6};
 end
 
@@ -125,7 +125,7 @@ amp3 = abs(imf3(pks3));
 
 maxFrac = 0.1;
 %% Frequency from IMF1
-thresh = mean(amp1) + std(amp1);
+thresh = mean(amp1) + thresh*std(amp1);
 pks1(amp1 < thresh)= [];
 amp1(amp1 < thresh) = [];
 t1 = time(pks1);
@@ -154,7 +154,7 @@ f1(weakInds) = [];
 t1(weakInds) = [];
 
 %% Frequency from IMF2
-thresh = mean(amp2) + 0.5*std(amp2);
+thresh = mean(amp2) + 0.5*thresh*std(amp2);
 pks2(amp2 < thresh/20)= [];
 amp2(amp2 < thresh/20) = [];
 t2 = time(pks2);
@@ -182,7 +182,7 @@ f2(weakInds) = [];
 t2(weakInds) = [];
 
 %% Frequency from IMF3
-thresh = mean(amp3) + 0.25*std(amp3);
+thresh = mean(amp3) + 0.25*thresh*std(amp3);
 pks3(amp3 < thresh/40)= [];
 amp3(amp3 < thresh/40) = [];
 t3 = time(pks3);
@@ -268,7 +268,7 @@ if strcmpi(plotOrNot,'y')
     axis([time(1) time(end) min(f_all) max(f_all)])
     % ylim(freqRange), xlim([time(1) time(end)])
     for jj = 1:size(S,1)
-        plot(S(jj,4),S(jj,2),'color',colVals(jj,:),'marker','o','markersize',5,'markerfacecolor',colVals(jj,:))
+        plot(S(jj,4),S(jj,1),'color',colVals(jj,:),'marker','o','markersize',5,'markerfacecolor',colVals(jj,:))
     end
     colormap(colorMap)
     ch = colorbar;
