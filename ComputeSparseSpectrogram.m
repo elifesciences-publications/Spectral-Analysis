@@ -123,7 +123,7 @@ amp2 = abs(imf2(pks2));
 amp3 = abs(imf3(pks3));
 
 
-maxFrac = 0.1;
+maxFrac = 0.2;
 %% Frequency from IMF1
 thresh = mean(amp1) + thresh*std(amp1);
 pks1(amp1 < thresh)= [];
@@ -154,7 +154,7 @@ f1(weakInds) = [];
 t1(weakInds) = [];
 
 %% Frequency from IMF2
-thresh = mean(amp2) + 0.5*thresh*std(amp2);
+thresh = mean(amp2) + 0.9*thresh*std(amp2);
 pks2(amp2 < thresh/20)= [];
 amp2(amp2 < thresh/20) = [];
 t2 = time(pks2);
@@ -175,14 +175,14 @@ f2(outInds) = [];
 amp2(outInds) = [];
 pks2(outInds) =[];
 
-weakInds = find(amp2 < (0.25*maxFrac*max(amp2)));
+weakInds = find(amp2 < (maxFrac*max(amp2)));
 amp2(weakInds)=[];
 pks2(weakInds) = [];
 f2(weakInds) = [];
 t2(weakInds) = [];
 
 %% Frequency from IMF3
-thresh = mean(amp3) + 0.25*thresh*std(amp3);
+thresh = mean(amp3) + 0.8*thresh*std(amp3);
 pks3(amp3 < thresh/40)= [];
 amp3(amp3 < thresh/40) = [];
 t3 = time(pks3);
@@ -203,7 +203,7 @@ f3(outInds) = [];
 amp3(outInds) = [];
 pks3(outInds) = [];
 
-weakInds = find(amp3 < (0.25*maxFrac*max(amp3)));
+weakInds = find(amp3 < (maxFrac*max(amp3)));
 amp3(weakInds)=[];
 pks3(weakInds) = [];
 f3(weakInds) = [];

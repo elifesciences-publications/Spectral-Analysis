@@ -6,10 +6,11 @@ function [varargout] = my_xwt(x,y,t,varargin)
 fourier_factor = 1.0330; % Conversion factor for changing wavelet scales to periods.
 
 %% Adjustable parameters
-peakDetectionThreshold = 0.1; % Determines the peak detection for global wavelet spectrum plotted to the right of XWT.
+peakDetectionThreshold = 0.01; % Determines the peak detection for global wavelet spectrum plotted to the right of XWT.
                      % Lower value results in detection of smaller peaks.
                  
 freqRange = [10 200]; % Power for frequencies only within this range will be calculated and displayed
+stringency = 1;
 
 scaleRange = 1./(freqRange*fourier_factor);
 S0 = min(scaleRange);
@@ -107,6 +108,7 @@ if ~strcmpi(Args.Mother,'morlet')
     
     sig95(:)=nan;
 end
+Wxy(sig95 < stringency)=0;
 varargout={Wxy,period,scale,coi,sig95};
 varargout=varargout(1:nargout);
 
