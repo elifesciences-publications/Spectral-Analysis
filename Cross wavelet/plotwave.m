@@ -6,7 +6,8 @@ function plotwave(Wxy, time, period, coi, sig95, sigmax, sigmay)
 % Updated: 01-Mar-2011 02:40:47
 
 %% Some variables
-CData = Wxy; CData(CData==0)=nan;
+CData = Wxy;
+% CData(CData==0)=nan;
 arrowDensity =[18 18]; % default [25 25]
 ad = mean(arrowDensity);
 arrowSize = 1*30.*0.03/ad;
@@ -53,8 +54,8 @@ else
     colormap(colorScheme) % AP code
 end
 clim=get(gca,'clim'); % center color limits around log2(1)=0
-% clim=[-1 1]*max(clim(2),6); %% ok
-clim = [-9 9]; % default= [-9 9] - AP
+clim=[-1 1]*max(clim(2),12); %% ok
+% clim = [-9 9]; % default= [-9 9] - AP
 clim = fix(clim);
 set(gca,'clim',clim);
 
