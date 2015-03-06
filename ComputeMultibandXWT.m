@@ -41,6 +41,9 @@ elseif nargin < 5
 elseif nargin < 6
     phaseType = 'all';
     plotSwitch = 0;
+    freqRange = varargin{3};
+    dj = varargin{4};
+    stringency = varargin{5};
 elseif nargin > 7
     errordlg('Too many inputs!');
 else

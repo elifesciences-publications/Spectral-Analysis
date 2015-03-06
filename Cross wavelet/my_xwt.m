@@ -10,7 +10,7 @@ peakDetectionThreshold = 0.01; % Determines the peak detection for global wavele
                      % Lower value results in detection of smaller peaks.
                  
 freqRange = [10 200]; % Power for frequencies only within this range will be calculated and displayed
-stringency = 0;
+stringency = 1;
 stringency2 = 1;
 
 scaleRange = 1./(freqRange*fourier_factor);
@@ -92,10 +92,10 @@ coi=min(coix,coiy);
 % -------- Cross
 Wxy=X.*conj(Y);
 
-muWxy = mean(Wxy(:));
-sigWxy = std(Wxy(:));
-threshWxy = 0.1*muWxy + 0*sigWxy;
-Wxy(Wxy < threshWxy) = 0;
+% muWxy = mean(Wxy(:));
+% sigWxy = std(Wxy(:));
+% threshWxy = 0.1*muWxy + 0*sigWxy;
+% Wxy(Wxy < threshWxy) = 0;
 
 
 %---- Significance levels
@@ -142,7 +142,7 @@ ax1 = axes; box off
 aPos = get(ax1,'position');
 aPos = [aPos(1)-0.02 aPos(2)+ aPos(4)*(1/3) aPos(3)*(0.8) aPos(4)*(0.75)];
 set(ax1,'position', aPos)
-plotwave(Wxy,t,period,coi,sig95,sigmax, sigmay)
+plotwavelin(Wxy,t,period,coi,sig95,sigmax, sigmay,stringency)
 set(ax1,'color','k','xtick',[], 'xcolor','w','ycolor','k')
 xlim([t(1) t(end)]) %%%% This line is NECESSARY to ensure that x-axis is aligned with traces below
 xlabel('')
