@@ -10,7 +10,7 @@ peakDetectionThreshold = 0.01; % Determines the peak detection for global wavele
                      % Lower value results in detection of smaller peaks.
                  
 freqRange = [10 200]; % Power for frequencies only within this range will be calculated and displayed
-stringency = 1;
+stringency = 0.1;
 stringency2 = 1;
 
 scaleRange = 1./(freqRange*fourier_factor);
@@ -68,8 +68,14 @@ if strcmpi(Args.AR1,'auto')
     end
 end
 
-sigmax = std(x(:,2));
-sigmay = std(y(:,2));
+% sigmax = std(x(:,2));
+% sigmay = std(y(:,2));
+
+[~,muX,sigX] = ZscoreByHist(x(:,2));
+[~,muY,sigY] = ZscoreByHist(y(:,2));
+sigmax  = (sigX + sigY)/2;
+sigmay = sigmax;
+
 
 % ----- Wavelet Transforms
 [X,period,scale,coix] = wavelet(x(:,2),dt,Args.Pad,Args.Dj,Args.S0,Args.J1,Args.Mother);
@@ -91,6 +97,10 @@ coi=min(coix,coiy);
 
 % -------- Cross
 Wxy=X.*conj(Y);
+
+[~,muWxy,sigWxy] = ZscoreByHist(Wxy(:));
+
+thresh = muWxy + stringency2*sigWxy;
 
 % muWxy = mean(Wxy(:));
 % sigWxy = std(Wxy(:));
@@ -115,6 +125,7 @@ if ~strcmpi(Args.Mother,'morlet')
     sig95(:)=nan;
 end
 Wxy(sig95 < stringency)=0;
+Wxy(Wxy < thresh) = 0;
 varargout={Wxy,period,scale,coi,sig95};
 varargout=varargout(1:nargout);
 
@@ -138,11 +149,13 @@ set(gcf,'position',[figPos(1) figPos(2)-figPos(4)/2 figPos(3)* 1.5...
     figPos(4)+figPos(4)/2]);
 
 %% XWT Axes
+cData = Wxy;
+cData(cData==0) = NaN;
 ax1 = axes; box off
 aPos = get(ax1,'position');
 aPos = [aPos(1)-0.02 aPos(2)+ aPos(4)*(1/3) aPos(3)*(0.8) aPos(4)*(0.75)];
 set(ax1,'position', aPos)
-plotwavelin(Wxy,t,period,coi,sig95,sigmax, sigmay,stringency)
+plotwavelin(cData,t,period,coi,sig95,sigmax, sigmay,stringency)
 set(ax1,'color','k','xtick',[], 'xcolor','w','ycolor','k')
 xlim([t(1) t(end)]) %%%% This line is NECESSARY to ensure that x-axis is aligned with traces below
 xlabel('')
