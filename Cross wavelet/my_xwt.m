@@ -10,8 +10,8 @@ peakDetectionThreshold = 0.01; % Determines the peak detection for global wavele
                      % Lower value results in detection of smaller peaks.
                  
 freqRange = [10 200]; % Power for frequencies only within this range will be calculated and displayed
-stringency = 0.1;
-stringency2 = 1;
+stringency = 3;
+stringency2 = 10;
 
 scaleRange = 1./(freqRange*fourier_factor);
 S0 = min(scaleRange);
@@ -37,11 +37,12 @@ y = [t(:) y(:)];
 [x,dt]=formatts(x);
 [y,dty]=formatts(y);
 if dt~=dty
-    error('timestep must be equal between time series')
-end % AP: Requires the two inputs to have time cols with identical time steps
-t=(max(x(1,1),y(1,1)):dt:min(x(end,1),y(end,1)))'; %common time period
+    errordlg('Timestep must be equal for time series')
+end 
+
+t=(max(x(1,1),y(1,1)):dt:min(x(end,1),y(end,1)))'; % Common time period
 if length(t)<4
-    error('The two time series must overlap.')% AP: Overlap by at least 4 time pts
+    errordlg('The two time series must overlap.')
 end
 
 n=length(t);
@@ -68,10 +69,10 @@ if strcmpi(Args.AR1,'auto')
     end
 end
 
+
 % sigmax = std(x(:,2));
 % sigmay = std(y(:,2));
-
-[~,muX,sigX] = ZscoreByHist(x(:,2));
+[~,muX,sigX] = ZscoreByHist(x(:,2)); % Doing this instead of sigmax*sigmay to avoid div by zero if any of them is zero.
 [~,muY,sigY] = ZscoreByHist(y(:,2));
 sigmax  = (sigX + sigY)/2;
 sigmay = sigmax;
@@ -98,13 +99,12 @@ coi=min(coix,coiy);
 % -------- Cross
 Wxy=X.*conj(Y);
 
-[~,muWxy,sigWxy] = ZscoreByHist(Wxy(:));
-
-thresh = muWxy + stringency2*sigWxy;
+[~,muWxy,sigWxy] = ZscoreByHist(abs(Wxy(:)));
 
 % muWxy = mean(Wxy(:));
 % sigWxy = std(Wxy(:));
-% threshWxy = 0.1*muWxy + 0*sigWxy;
+threshWxy = muWxy + stringency2*sigWxy;
+
 % Wxy(Wxy < threshWxy) = 0;
 
 
@@ -120,12 +120,11 @@ Zv = 3.9999; %(default: Zv = 3.9999)
 signif=sigmax*sigmay*sqrt(Pkx.*Pky)*Zv/V;
 sig95 = (signif')*(ones(1,n));  % expand signif --> (J+1)x(N) array
 sig95 = abs(Wxy) ./ sig95;
-if ~strcmpi(Args.Mother,'morlet')
-    
+if ~strcmpi(Args.Mother,'morlet')    
     sig95(:)=nan;
 end
 Wxy(sig95 < stringency)=0;
-Wxy(Wxy < thresh) = 0;
+Wxy(abs(Wxy) < threshWxy) = 0;
 varargout={Wxy,period,scale,coi,sig95};
 varargout=varargout(1:nargout);
 
