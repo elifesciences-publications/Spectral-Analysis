@@ -161,8 +161,7 @@ varargout=varargout(1:nargout);
 
 
 if plotOrNot
-    
-    
+       
     %% Calculating XW power spectrum
     powerSpectrum = sum(abs(Wxy),2);
     normPowerSpectrum = powerSpectrum/max(powerSpectrum);
