@@ -22,7 +22,7 @@ peakStringency = 1;
 yShift = 25;
 
 %% Checking Sampling Interval Consistency
-sichck = diff(samplingInts); 
+sichck = diff(samplingInts);
 if any(sichck ~= 0) % Given the code in createdatastructure.m, I am not sure that this will ever be true.
     errordlg('Signals Sampled at Different Intervals!')
     break
@@ -57,50 +57,50 @@ if ~exist('ch')
 end
 
 if ~exist('hpf')
-      hpf = 50;
+    hpf = 50;
 end
 
 if ~exist('lpf')
-     lpf = 2;
+    lpf = 2;
 end
 if ~exist('firstCommonTime')
     firstCommonTime = max(minMat); % Starting point for common time vector
 end
 
 if ~exist('lastCommonTime')
-   lastCommonTime = min(maxMat); % End point for common time vector
+    lastCommonTime = min(maxMat); % End point for common time vector
 end
 
 if ~exist('freqRange')
-   freqRange = [0.1 4]; 
+    freqRange = [0.1 4];
 end
 
 if ~exist('stringency')
-   stringency = 1; 
+    stringency = 1;
 end
 
 if ~exist('isoThresh')
-   isoThresh = 0.5; 
+    isoThresh = 0.5;
 end
 
 if ~exist('phaseType')
-   phaseType = 'All'; 
+    phaseType = 'All';
 end
 
 if ~exist('traceType')
-   traceType = 'Smooth'; 
+    traceType = 'Smooth';
 end
 
 if ~exist('icc')
-   icc = -1; 
+    icc = -1;
 end
 
 if ~exist('hpf_icc')
-   hpf_icc = 0.0001; 
+    hpf_icc = 0.0001;
 end
 
 if ~exist('lpf_icc')
-   lpf_icc = 2; 
+    lpf_icc = 2;
 end
 
 if ~exist('lightChannelIndex')
@@ -159,7 +159,11 @@ extra_pos = find(ch~=icc);
 ch_extra = ch;
 ch_extra(icc_pos)=[];
 % artChk = questdlg('Auto-remove Stimulus Artifacts?');
-artChk = 'yes';
+if selection ~=4
+    artChk = 'yes';
+else
+    artChk = 'no';
+end
 for fileNum = 1:nFiles
     %%%% Truncating Signals to Common Time Portion
     [fpt,lpt] = deal([]);
@@ -168,26 +172,26 @@ for fileNum = 1:nFiles
     dtime = diff(time);
     if any(dtime<=0)
         errordlg('Time Axis Vector Inconsistent: Please Make Sure Time Axis in Each File Has Evenly Spaced Ascending Values;')
-    end    
+    end
     eval(['fpt = find(blah >= firstCommonTime,1);']);
     lpt = fpt + lenTime;
-        commonPts = fpt:lpt;
+    commonPts = fpt:lpt;
     lenDiff = length(time) - length(commonPts);
     lpt = lpt+lenDiff;
     commonPts = fpt:lpt;
     if lightChannelIndex ~=-1
-         eval(['data' fstr '= data' fstr '(commonPts,[ch lightChannelIndex]);']); % Inserting light channel into 'data'
+        eval(['data' fstr '= data' fstr '(commonPts,[ch lightChannelIndex]);']); % Inserting light channel into 'data'
     else
-         eval(['data' fstr '= data' fstr '(commonPts,ch);']);
+        eval(['data' fstr '= data' fstr '(commonPts,ch);']);
     end
     %%%% Highpass Filtering Signals
-
+    
     eval(['temp' fstr ' = data' fstr ';']); % Leaving light channel out of 'temp'
     eval(['temp' fstr '(:,extra_pos) = chebfilt(data' fstr '(:,extra_pos),samplingInt,hpf,''high'');']); % Highpassing extracellular signals
-    if ~isempty(icc_pos) 
+    if ~isempty(icc_pos)
         eval(['temp' fstr '(:,icc_pos) = chebfilt(data' fstr '(:,icc_pos),samplingInt,hpf_icc,''high'');']); % Highpassing intracellular signal(s)
     end
-      
+    
     
     if strcmpi(artChk,'yes')
         eval(['temp' fstr ' = autoartremove(temp' fstr ',time);']);
@@ -199,62 +203,62 @@ for fileNum = 1:nFiles
         errordlg('Signal Filtering Error! Please re-specify the time range')
     end
     
-    if strcmpi(threshdenoising,'y') 
+    if strcmpi(threshdenoising,'y')
         eval(['temp' fstr ' = chebfilt(overthreshremove(temp' fstr...
             ',time),samplingInt,hpf,''high'');']); % Manually chops
         %         % ... off stim artifacts that were not properly removed.
     end
+    %%%% Filtfilt.m Error Message
+    blah = eval(['temp' fstr ';']);
+    if any(isnan(blah(:)))
+        errordlg('Signal Filtering Error! Please re-specify the time range')
+    end
+    %%%% Removing 60Hz noise
+    if strcmpi(denoise,'y')
+        eval(['temp' fstr ' = double(temp' fstr ');']);
+        eval(['temp' fstr '=chebfilt(temp' fstr...
+            ',samplingInt,stopband,''stop'');']) %%%%% Stopbands
         %%%% Filtfilt.m Error Message
         blah = eval(['temp' fstr ';']);
         if any(isnan(blah(:)))
             errordlg('Signal Filtering Error! Please re-specify the time range')
         end
-        %%%% Removing 60Hz noise
-        if strcmpi(denoise,'y') 
-            eval(['temp' fstr ' = double(temp' fstr ');']);
-            eval(['temp' fstr '=chebfilt(temp' fstr...
-                ',samplingInt,stopband,''stop'');']) %%%%% Stopbands
-            %%%% Filtfilt.m Error Message
-            blah = eval(['temp' fstr ';']);
-            if any(isnan(blah(:)))
-                errordlg('Signal Filtering Error! Please re-specify the time range')
-            end
-        end
-        
-        eval(['signal' fstr '=temp' fstr ';'])
-        
-        %%%% Filtfilt.m Error Message
-        blah = eval(['temp' fstr ';']);
-        if any(isnan(blah(:)))
-            errordlg('Signal Filtering Error! Please re-specify the time range')
-        end
-        
-        %%%% Signal Rectification or absolute values
-        if hpf >= 20 % Rectification only when signal is highpassed over 20Hz
-            %%%%%%%% Use these lines for half-wave rectification %%%%%%
-%             clear f
-%             eval(['f = signal' fstr ';']);
-%             eval(['f(:,extra_pos) = signal' fstr '(:,extra_pos)<0;'])
-%             eval(['signal' fstr '(f)=0;'])
-           %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-           %%%%%% Altneratively, use this for absolute values %%%% 
-            eval(['signal' fstr ' = abs(signal' fstr ');'])
-           %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        end
-        
-        eval(['signal' fstr '(:,extra_pos) = (chebfilt(signal' fstr...
-            '(:,extra_pos).^1,samplingInt,lpf,''low'')).^(1);']) % Lowpasses extracellular signals
-        if ~isempty(icc_pos)
-             eval(['signal' fstr '(:,icc_pos)=chebfilt(signal' fstr...
+    end
+    
+    eval(['signal' fstr '=temp' fstr ';'])
+    
+    %%%% Filtfilt.m Error Message
+    blah = eval(['temp' fstr ';']);
+    if any(isnan(blah(:)))
+        errordlg('Signal Filtering Error! Please re-specify the time range')
+    end
+    
+    %%%% Signal Rectification or absolute values
+    if hpf >= 20 % Rectification only when signal is highpassed over 20Hz
+        %%%%%%%% Use these lines for half-wave rectification %%%%%%
+        %             clear f
+        %             eval(['f = signal' fstr ';']);
+        %             eval(['f(:,extra_pos) = signal' fstr '(:,extra_pos)<0;'])
+        %             eval(['signal' fstr '(f)=0;'])
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%% Altneratively, use this for absolute values %%%%
+        eval(['signal' fstr ' = abs(signal' fstr ');'])
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    end
+    
+    eval(['signal' fstr '(:,extra_pos) = (chebfilt(signal' fstr...
+        '(:,extra_pos).^1,samplingInt,lpf,''low'')).^(1);']) % Lowpasses extracellular signals
+    if ~isempty(icc_pos)
+        eval(['signal' fstr '(:,icc_pos)=chebfilt(signal' fstr...
             '(:,icc_pos),samplingInt,lpf_icc,''low'');']) % Lowpasses intracellular signals
-        end
-       
-        
-        %%%% Filtfilt.m Error Message
-        blah = eval(['signal' fstr ';']);
-        if any(isnan(blah(:)))
-            errordlg('Signal Filtering Error! Please re-specify the time range')
-        end  
+    end
+    
+    
+    %%%% Filtfilt.m Error Message
+    blah = eval(['signal' fstr ';']);
+    if any(isnan(blah(:)))
+        errordlg('Signal Filtering Error! Please re-specify the time range')
+    end
 end
 
 globData = data1;

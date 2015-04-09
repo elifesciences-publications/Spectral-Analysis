@@ -265,7 +265,11 @@ if strcmpi(plotOrNot,'y')
     hold on
     set(gca,'color','k','tickdir','out'), box off
     ylabel('Frequency (Hz)'), xlabel('Time (sec)')
+    if isempty(f_all)
+        axis([time(1) time(end) -inf inf])
+    else        
     axis([time(1) time(end) min(f_all) max(f_all)])
+    end
     % ylim(freqRange), xlim([time(1) time(end)])
     for jj = 1:size(S,1)
         plot(S(jj,4),S(jj,1),'color',colVals(jj,:),'marker','o','markersize',5,'markerfacecolor',colVals(jj,:))
