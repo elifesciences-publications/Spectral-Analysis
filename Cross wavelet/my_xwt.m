@@ -1,7 +1,7 @@
 function [varargout] = my_xwt(x,y,t,varargin)
 % My custom written XWT based on xwt.m by Grinsted et al
 % [Wxy,period,scale,coi,sig95] = my_xwt(x,y,time);
-% [Wxy,period,scale,coi,sig95] = my_xwt(x,y,time,freqRange,stringency,threshold,plotOrNot);
+% [Wxy,period,scale,coi,sig95] = my_xwt(x,y,time,freqRange,stringency,threshold,plotOrNot,sigmaxy);
 
 % plotOrNot = 0 ==> Don't plot; 1 ==> Plot.
 
@@ -29,11 +29,17 @@ elseif nargin < 7
     stringency = varargin{2};
     threshold = varargin{3};
     plotOrNot = 1;
+elseif nargin < 8
+     freqRange = varargin{1};
+    stringency = varargin{2};
+    threshold = varargin{3};
+    plotOrNot = varargin{4};
 else
     freqRange = varargin{1};
     stringency = varargin{2};
     threshold = varargin{3};
     plotOrNot = varargin{4};
+    sigmaxy = varargin{5};
 end
 
 
@@ -112,12 +118,17 @@ if strcmpi(Args.AR1,'auto')
 end
 
 
+if ~ exist('sigmaxy')
 % sigmax = std(x(:,2));
 % sigmay = std(y(:,2));
 [~,muX,sigX] = ZscoreByHist(x(:,2)); % Doing this instead of sigmax*sigmay to avoid div by zero if any of them is zero.
 [~,muY,sigY] = ZscoreByHist(y(:,2));
 sigmax  = (sigX + sigY)/2;
 sigmay = sigmax;
+else
+    sigmax = sigmaxy;
+    sigmay = sigmaxy;
+end
 
 
 % ----- Wavelet Transforms
