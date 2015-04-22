@@ -59,10 +59,9 @@ if numel(maxtab) == 0
 end
 
 
-figure
 figPos = get(gcf,'position');
 set(gcf,'position',[figPos(1) figPos(2) figPos(3)*1.2 figPos(4)])
-
+hold on
 % Colorbar
 HCB = safecolorbar;
 loc = get(HCB,'Location');
@@ -108,6 +107,9 @@ set(gca,'clim',clim,'YLim',log2([min(freq),max(freq)]), ...
 
 ylabel('Frequency (Hz)')
 set(ax1,'color','k','ycolor','k')
+if nargin == 3
+    xlabel('Time')
+end
 xlim([time(1) time(end)]) %%%% This line is NECESSARY to ensure that x-axis is aligned with traces below
 ylims1 = get(ax1,'ylim');
 yticklabels_ax1 = str2num(get(ax1,'yticklabel'));
