@@ -3,7 +3,7 @@ function varargout = instantaneouswavefreq(Wxy,freq)
 % [mean_instantaneous_freq,peakpower_instantaneous_frequency] =
 % instantaneouswavefreq(Wxy,freq)
 
-if nargin <2
+if nargin < 2
     errordlg('At least 2 input variables required')
     return
 end
