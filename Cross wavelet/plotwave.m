@@ -7,7 +7,7 @@ function plotwave(Wxy, time, period, coi, sig95, sigmax, sigmay)
 
 %% Some variables
 CData = Wxy;
-% CData(CData==0)=nan;
+CData(CData==0)=nan;
 arrowDensity =[18 18]; % default [25 25]
 ad = mean(arrowDensity);
 arrowSize = 1*30.*0.03/ad;

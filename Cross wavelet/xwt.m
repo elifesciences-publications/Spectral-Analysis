@@ -54,7 +54,7 @@ function varargout=xwt(x,y,varargin)
 
 %% --------------- OPTIONS ------ AP (06-Jun-2012)
 sigma_extent = 'full'; % ('select' or 'full'; default: 'full')
-noise_type = 'white'; % ('red' or 'white'; default: 'white')
+noise_type = 'red'; % ('red' or 'white'; default: 'white')
 
 %% ---------------- End of OPTIONS
 

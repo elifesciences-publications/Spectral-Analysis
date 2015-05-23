@@ -5,7 +5,7 @@
 % For e.g., Wxy(:,:,2,3) is the matrix of XW coefficients from the 2nd file
 % and computed for the 3rd pair of channels being compared.
 
-% Author: AP
+% Avinash Pujala, NIH
 
 %% Variables Glossary
 % Wxy ==> XWT coefficients. Values are complex numbers whose magnitude
@@ -21,7 +21,7 @@
 
 %% Wavelet Parameters
 
-wavelet_scale_resolution = 1/2^6; % (Must at least be 1/10)
+dj = 1/2^6; % (Wavelet scale resolution)
 number_of_phase_bins = 90; % Number of bins for phase histograms
 motherWavelet = 'Morlet'; %%%('Morlet', 'Paul','DOG') - For now use only Morlet, other wavelets will give erroneous results
 avgCheck =0;
@@ -30,7 +30,6 @@ peakDetectionThresh = 0.25;
 %%  OPTIONS
 
 Pad = 1; % Zero padding of signals (Pad = 1: Pad with zeroes; Pad = 0: Don't zero pad)
-dj = wavelet_scale_resolution; % Wavelet scale resolution (Must be at least 1/10)
 nPhaseBins = number_of_phase_bins; % Number of bins for phase histograms
 
 time_axis_xticks = 'regular'; %('train' - displays the stimulus train, 'regular' - displays time regularly; default:'train')
