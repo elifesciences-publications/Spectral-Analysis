@@ -22,12 +22,15 @@ Wxy = varargin{1};
 if nargin < 2
     time = 1:size(Wxy,1);
     freq = 1:size(Wxy,1);
+    sigs = [];
 elseif nargin < 3
     time = varargin{2};
     freq = 1:size(Wxy,1);
+    sigs = [];
 elseif nargin < 4
     time = varargin{2};
     freq = varargin{3};
+    sigs = [];
 elseif nargin ==4
     time = varargin{2};
     freq = varargin{3};
