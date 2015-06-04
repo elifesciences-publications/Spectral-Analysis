@@ -386,9 +386,7 @@ for fileNum = 1:nFiles % File Number Loop # 1
             end
             set(ax1,'position', aPos,'drawmode','fast')
         end
-        
-        
-        
+                       
         sig95 = sig95(:,:,fileNum,chNum);
         Wxy = W_coi_sig_alt(:,:,fileNum,chNum);
         

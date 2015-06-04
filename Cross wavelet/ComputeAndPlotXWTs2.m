@@ -17,61 +17,49 @@
 %           sig95(4,5)= 3, that implies Wxy(4,5)is 3 variances
 %           (95% confidence level) away from noise with the same mean as the
 %           time series.
-%
 
-%% Wavelet Parameters
-
-dj = 1/2^6; % (Wavelet scale resolution)
-number_of_phase_bins = 90; % Number of bins for phase histograms
-motherWavelet = 'Morlet'; %%%('Morlet', 'Paul','DOG') - For now use only Morlet, other wavelets will give erroneous results
-avgCheck =0;
-peakDetectionThresh = 0.25;
-
-%%  OPTIONS
-
-Pad = 1; % Zero padding of signals (Pad = 1: Pad with zeroes; Pad = 0: Don't zero pad)
-nPhaseBins = number_of_phase_bins; % Number of bins for phase histograms
-
-time_axis_xticks = 'regular'; %('train' - displays the stimulus train, 'regular' - displays time regularly; default:'train')
-figdisp = 'y'; %%% ('n' = does not display figures; [] = displays figs );
+%% Specifying wavelet parameters &  a few additional options
+dj                  = 1/2^6; % (Wavelet scale resolution)
+nPhaseBins          = 90; % Number of bins for phase histograms
+motherWavelet       = 'Morlet'; %('Morlet','Paul','DOG'; current code implementation only works with 'Morlet')
+avgCheck            = 0;
+pkDetThr            = 0.25;
+Pad                 = 1; % Zero padding of signals (Pad = 1: Pad with zeroes; Pad = 0: Don't zero pad)
+time_axis_xticks    = 'regular'; %('train' - displays the stimulus train, 'regular' - displays time regularly; default:'train')
+figDisp             = 'y'; % ('n' suppresses figures; [] = displays figs )
+fourierFactor       = 1.0330; % Conversion factor for transforming wavelet scales to fourier frequencies.
+%   DO NOT CHANGE THIS VALUE (as long as you are using Morlet with wave number = 6)
 
 
-%% Wavelet Parameters - Derived and Fixed
-fourier_factor = 1.0330; % This is the factor into which wavelet scales
-% divide to yield frequency values. DO NOT CHANGE THIS VALUE (as long as
-% you are using Morlet with wave# = 6)
-scaleRange = 1./(freqRange*fourier_factor); % Scale range corresponding to frequency range.
+%% Compting XW parameters
+scaleRange = 1./(freqRange*fourierFactor); % Scale range corresponding to frequency range.
 S0 = min(scaleRange);
-MaxScale = max(scaleRange);
+maxScale = max(scaleRange);
 
-%% XW Calculations
-if freqRange(2) >= floor(1/samplingInt); errordlg('High frequency value above Nyquist limit'), end
-% lpf = ceil(freqRange(2)/2.5);
+if freqRange(2) >= floor(1/samplingInt)
+    errordlg('High frequency value above Nyquist limit'), 
+end
 
-%% Signal Reduction Parameters
-newSamplingFrequency = max(freqRange(2)*2.5,20); % This ensures that the new sampling rate is well over twice the largest frequency.
+newSamplingFreq = max(freqRange(2)*2.5,20); % This ensures that the new...
+%   sampling rate is well over twice the largest frequency.
 
-%% Some processing
-tempSig = eval(['signal' num2str(1) ';']);
-sigMat = zeros(size(tempSig,1),nFiles,size(tempSig,2)); % Third dimension...
-%... of sigMat contain channels, while second the files.
+sigMat = zeros(size(data(1).smooth,1),nFiles ,size(data(1).smooth,2));
+% sigMat = zeros(size(signal1,1),nFiles,size(signal1,2)); % Third dimension...
+%    of sigMat contain channels, while second the files.
 sigmas = zeros(size(sigMat,2),size(sigMat,3));
-clear tempSig
 for fileNum = 1:nFiles
     for chNum = 1:size(sigMat,3)
-        eval(['sigMat(:,fileNum,chNum)= signal' num2str(fileNum) '(:,chNum);'])
+%         eval(['sigMat(:,fileNum,chNum)= signal' num2str(fileNum) '(:,chNum);'])
+        sigMat(:,fileNum,chNum) = data(fileNum).smooth(:,chNum);
         [~,~,sigmas(fileNum,chNum)] = ZscoreByHist(sigMat(:,fileNum,chNum));
     end
 end
-%% Mean of Standard Deviation of all Signals
-b = mean(sigmas,1);
-c = repmat(b,size(sigmas,1),1);
 sigmas_prenorm = sigmas;
-sigmas = c; % So, the only time sigmas will differ from sigmas_prenorm is of multiple files are loaded
+sigmas = repmat(mean(sigmas,1),size(sigmas,1),1); % sigmas will differ from...
+%   sigmas_prenorm if multiple files are loaded
 
-%% Truncating the signal matrix and filtering
-firstTime = time(1); lastTime = time(end);
-time_reduced = time;
+firstTime = data(1).time(1); lastTime = data(1).time(end);
+time_reduced = data(1).time;
 
 
 %% TO PLOT OR NOT TO PLOT
@@ -90,7 +78,9 @@ sigMat2 =reshape(sigMat2,size(sigMat2,1),size(sigMat2,2)*size(sigMat2,3));
 sigMat2 = [time_reduced(:) sigMat2];
 
 %% SIGNAL REDUCTION PARAMETERS
-sigMat = reducedata(sigMat,time_reduced,newSamplingFrequency); 
+% sigMat = reducedata(sigMat,time_reduced,newSamplingFreq); 
+sigMat = sigMat(1:floor((1/samplingInt)/newSamplingFreq):end,:,:);
+
 %% Normalizing Signals when Multiple Files are Loaded 
 % This is so as to apply the same stringency (statistical threshold) to all signals. Important when computing \mathbb{S}^e.
 % b = permute(sigmas,[3 1 2]);
@@ -102,7 +92,7 @@ sigMat = reducedata(sigMat,time_reduced,newSamplingFrequency);
 % sigMat = slowartifactremove(sigMat) %%%% In case, I want to remove light
                                       %%%% artifacts from optogenetic
                                       %%%% trials.
-time_reduced = linspace(time(1),time(end),size(sigMat,1));
+time_reduced = linspace(data(1).time(1),data(1).time(end),size(sigMat,1));
 dtr = time_reduced(2)-time_reduced(1);
 endPt = time_reduced(1)+ (dtr*length(time_reduced));
 time_reduced = time_reduced(1):dtr:endPt-dtr; %%% This step is necessary to ensure equal timesteps within time_reduced!!!
@@ -140,7 +130,7 @@ if strcmpi(powerSpectrumType,'linear')|| strcmpi(powerSpectrumType,'log') || str
 else
     errordlg('Input for the variable "powerSpectrumType" not specified properly')
 end
-peakDetectionThresh = 0.1; % This determines the amplitude of a peak in the power spectrum for which a frequency value should be displayed. Setting to a low value detects low peaks and displace their corresponding freq values.
+pkDetThr = 0.1; % This determines the amplitude of a peak in the power spectrum for which a frequency value should be displayed. Setting to a low value detects low peaks and displace their corresponding freq values.
 
 %% XWT
 clear statMat chLabelMat fNamesMat
@@ -165,7 +155,7 @@ clear sigxy
 
 
 
-lf = round(log2(MaxScale/S0)/dj)+10; % Aribitrarily chose 10
+lf = round(log2(maxScale/S0)/dj)+10; % Aribitrarily chose 10
 clear W W_coi W_coi_sig W_coi_sig_alt W_temp W_noncoi W_noncoi_sig
 % W = zeros(lf,length(time_reduced),nFiles,length(ch));
 % [W_coi,W_coi_sig,W_coi_sig_alt,W_temp] = deal(W);
@@ -184,7 +174,7 @@ for fileNum = 1:nFiles % File Number Loop # 1
         % End: Normalizing time-series
         
         [Wxy,period,scale,coi,sig95]= xwt2([time_reduced(:) sigMat(:,fileNum,chNum)],[time_reduced(:) sigMat(:,fileNum,chNum+1)],...
-            Pad, dj,'S0',S0, 'ms',MaxScale, 'Mother', motherWavelet);
+            Pad, dj,'S0',S0, 'ms',maxScale, 'Mother', motherWavelet);
         
         %         if fileNum == 1
         %             W(length(period)+1:lf,:,:,:)=[];
@@ -275,7 +265,7 @@ for fileNum = 1:nFiles % File Number Loop # 1
         blah(blah==-inf) = NaN;
         blah = (blah-min(blah))/(max(blah)-min(blah)); % Normalization by subtracting min and dividing by amplitude
         normlog_globalPowSpec.(fStr).(chStr) = blah;
-        [maxtab,mintab] = peakdet(globalPowSpec_maxnorm.(fStr).(chStr),peakDetectionThresh);
+        [maxtab,mintab] = peakdet(globalPowSpec_maxnorm.(fStr).(chStr),pkDetThr);
         
         if numel(maxtab) == 0
             maxtab(:,1)= find(globalPowSpec_maxnorm.(fStr).(chStr) == max(globalPowSpec_maxnorm.(fStr).(chStr)));
@@ -363,7 +353,7 @@ for fileNum = 1:nFiles % File Number Loop # 1
         
         
         %% PLOTTING FIGURES
-            if lower(figdisp) =='y'
+            if lower(figDisp) =='y'
             
             figure('Name', ['XW Power, File ' num2str(fileNum) ', Channels '...
                 num2str(ch(chNum)) ' vs ' num2str(ch(chNum+1))],'color','w','renderer','painter')
@@ -391,7 +381,7 @@ for fileNum = 1:nFiles % File Number Loop # 1
         sig95 = sig95(:,:,fileNum,chNum);
         Wxy = W_coi_sig_alt(:,:,fileNum,chNum);
         
-        if lower(figdisp)=='y'
+        if lower(figDisp)=='y'
 %             plotwave(Wxy,time_reduced,period,coi,sig95,...
 %                 sigmas(fileNum,chNum), sigmas(fileNum,chNum+1))
 sigmax = sigmas(fileNum,chNum);
@@ -482,18 +472,20 @@ W_coi_sig_alt(:,:,fileNum,chNum) = W_coi_sig_alt(:,:,fileNum,chNum)/(sigmax*sigm
             
             if strcmpi(traceType,'raw')
                 fstr = num2str(fileNum);
-                tempSig = eval(['temp' num2str(fileNum) '(:,chNum);']);
-                tempSig = truncatedata(tempSig,time,[firstTime lastTime]);
+%                 tempSig = eval(['temp' num2str(fileNum) '(:,chNum);']);
+                tempSig = data(fileNum).hp(:,chNum);
+                tempSig = truncatedata(tempSig,data(1).time,[firstTime lastTime]);
                 
-                tempTime = time; % Adding firstTime to the time vector here
+                tempTime = data(1).time; % Adding firstTime to the time vector here
                 % will set the time of the first stimulus in the stimulus
                 % train to a value of zero
                 
                 plot(tempTime,tempSig + (yShifter/2)*max(tempSig),'k','linewidth',1.5)
-                tempSig = eval(['temp' num2str(fileNum) '(:,chNum+1);']);
+%                 tempSig = eval(['temp' num2str(fileNum) '(:,chNum+1);']);
+                tempSig = data(fileNum).hp(:,chNum+1);
                 tempTime = linspace(firstTime,lastTime,length(tempSig));
                 %                 tempSig = zscore(truncatedata(tempSig,time,[firstTime lastTime]));
-                tempSig = truncatedata(tempSig,time,[firstTime lastTime]);
+                tempSig = truncatedata(tempSig,data(1).time,[firstTime lastTime]);
                 plot(tempTime,tempSig-(yShifter/2)*max(tempSig),...
                     'k','linewidth',1.5)
                 
