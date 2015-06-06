@@ -51,8 +51,9 @@ function varargout=xwt(x,y,varargin)
 %   routine is provided as is without any express or implied warranties
 %   whatsoever.
 
+% Custom modifications by Avinash Pujala, Janelia Research Campus, 2015
 
-%% Options
+%% Choose background noise type (for statistical significance testing)
 noise_type = 'white'; % ('red' or 'white'; default: 'white')
 
 %% Validate and reformat timeseries
@@ -102,7 +103,7 @@ if strcmpi(Args.AR1,'auto')
     end
 end
 
-% [~,~,sigmax] = ZscoreByHist(x(:,2)); 
+% [~,~,sigmax] = ZscoreByHist(x(:,2));
 % [~,~,sigmay] = ZscoreByHist(y(:,2));
 %# Although, ZscoreByHist() will likely provide a better estimate of the true std of a timeseries, I will
 %#  switch back to std() so as to make it consistent with std estimates in other dependent scripts.
@@ -130,21 +131,13 @@ Wxy=(X.*conj(Y)); % Not being normalized by division by sigmax*sigmay here.
 
 switch lower(noise_type)
     case 'red'
-        % Pkx=ar1spectrum(Args.AR1(1),period./dt);
-        % Pky=ar1spectrum(Args.AR1(2),period./dt); % This is from
-        % Grinsted et al (2004), but looks fishy and in disagreement with
-        % Torrence & Compo(1998). So, I modified it (see below)
-        
-%         Pkx=ar1spectrum_ap(Args.AR1(1),period); % My version uses eqn 16
-%           from Torrence & Compo, 1998, which should be equivalent to
-%           Grinsted's version, but seems not to be (????) 
+        %       Pkx=ar1spectrum_ap(Args.AR1(1),period); % This version uses eqn 16
+        %           from Torrence & Compo, 1998, which should be equivalent to
+        %           Grinsted's version, but seems not to be (????)
         Pkx =ar1spectrum(Args.AR1(1),period./dt);
         Pky=ar1spectrum(Args.AR1(2),period./dt);
     case 'white'
-        % Pkx=ar1spectrum(0,period./dt);
-        % Pky=ar1spectrum(0,period./dt);
-        
-%         Pkx=ar1spectrum_ap(0,period);
+        %       Pkx=ar1spectrum_ap(0,period);
         Pkx = ar1spectrum(0,period./dt);
         Pky=ar1spectrum(0,period./dt);
 end
@@ -154,7 +147,7 @@ Zv=3.9999; %(default:Zv = 3.999; Grinsted et al., 2004, eqn (5))
 signif=sigmax*sigmay*sqrt(Pkx.*Pky)*Zv/V; % Eqn (5)
 sig95 = (signif')*(ones(1,n));  % expand signif --> (J+1)x(N) array
 sig95 = abs(Wxy)./sig95;
-if ~strcmpi(Args.Mother,'morlet')    
+if ~strcmpi(Args.Mother,'morlet')
     sig95(:)=nan;
 end
 
@@ -163,7 +156,7 @@ if Args.MakeFigure
     if Args.BlackandWhite
         levels = [0.25,0.5,1,2,4,8,16];
         [cout,H]=safecontourf(t,log2(period),log2(abs(Wxy/(sigmax*sigmay))),log2(levels));%,log2(levels));  %*** or use 'contourf3ill'
-        cout(1,:)=2.^cout(1,:);        
+        cout(1,:)=2.^cout(1,:);
         HCB=colorbarf(cout,H);
         barylbls=rats([0 levels 0]');
         barylbls([1 end],:)=' ';

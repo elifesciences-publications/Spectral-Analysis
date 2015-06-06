@@ -183,7 +183,7 @@ for fileNum = 1:nFiles
         data(fileNum).raw = data(fileNum).raw(commonPts,ch);
     end
     % Highpass Filtering Signals
-    data(fileNum).hp(:,extra_pos) = chebfilt(data(1).raw(:,extra_pos),samplingInt,hpf,'high');
+    data(fileNum).hp(:,extra_pos) = chebfilt(data(fileNum).raw(:,extra_pos),samplingInt,hpf,'high');
 %     temp{fileNum}(:,extra_pos) = chebfilt(data{1}(:,extra_pos),samplingInt,hpf,'high');
     if ~isempty(icc_pos)
 %         temp{fileNum}(:,icc_pos) = chebfilt(data{fileNum}(:,icc_pos),samplingInt,hpf_icc,'high');

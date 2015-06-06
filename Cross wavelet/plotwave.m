@@ -49,7 +49,7 @@ if strcmpi(ordinateType,'linear')
     colormap(colorScheme)
 else
     Yticks = 2.^(fix(log2(min(freq))):fix(log2(max(freq))));
-    H=imagesc(time,log2(freq),log2(abs(CData/(sigmax*sigmay))));
+    H=imagesc(time,log2(freq),log2(abs(CData)));
 
     colormap(colorScheme) % AP code
 end

@@ -138,11 +138,12 @@ for file = 1:nFiles % File Number Loop # 1
         
         [Wxy.raw(:,:,file,chNum),period,scale, coi, sig95]= xwt([Wxy.time(:) sigMat(:,chNum,file)],[Wxy.time(:) sigMat(:,chNum+1,file)],...
             Wxy.pad, Wxy.dj,'S0',Wxy.S0, 'ms', Wxy.maxScale, 'Mother', Wxy.motherWavelet);
+       
         
         if file == 1
-            freq =1./period;
-            ftmat = repmat(freq(:), 1, lenTime);
-            coimat = repmat(1./coi(:)',length(freq), 1);
+            Wxy.freq =1./period;
+            ftmat = repmat(Wxy.freq(:), 1, lenTime);
+            coimat = repmat(1./coi(:)',length(Wxy.freq), 1);            
         end
         
         temp = Wxy.raw(:,:,file,chNum);
@@ -168,8 +169,7 @@ for file = 1:nFiles % File Number Loop # 1
             Wxy.coi(:,:,file,ch) = temp;
         end
         
-        %# Phase filtering
-        %         W = Wxy.raw(:,:,file,chNum);
+        %# Phase filtering       
         Axy  = angle(Wxy.raw(:,:,file,chNum));
         if strcmpi(phaseType,'alt')
             disp('Filtering out synchronous phases')
@@ -198,12 +198,10 @@ for file = 1:nFiles % File Number Loop # 1
         
         %# Estimating freq
         W = abs(Wxy.sig(:,:,file,chNum));
-        sumFP = ftmat.*W;
-        sumFP = sum(sumFP(:));
-        sumP = abs(Wxy.sig(:,:,file,chNum));
-        sumP = sum(sumP(:));
+        sumFP = sum(ftmat(:).*W(:));
+        sumP = sum(W(:));
         
-        Wxy.meanFreq(file,chNum) = round((sumFP/sumP)*100)/100;
+        Wxy.meanFreq(file,chNum) = round((sum(ftmat(:).*W(:))/sumP)*100)/100;
         Wxy.stdFreq(file,chNum) = circ_std(ftmat(W~=0),W(W~=0));
         %         Wxy.freqWithMostPow(file,chNum) = round(ftmat(find(W==max(W(:))))*100)/100;
         Wxy.freqWithMostPow(file,chNum) = 1/period(find(sum(W,2)==max(sum(W,2))));
@@ -217,7 +215,7 @@ for file = 1:nFiles % File Number Loop # 1
         
         if ~isempty(maxtab)
             pv = find(maxtab(:,2)== max(maxtab(:,2)));
-            pf = round(freq(maxtab(pv,1))*100)/100;
+            pf = round(Wxy.freq(maxtab(pv,1))*100)/100;
         else
             [maxtab(:,1),maxtab(:,2), pv, pf] = deal(nan);
         end
@@ -313,14 +311,14 @@ for file = 1:nFiles % File Number Loop # 1
                     maxtab(:,2)= 1+i;
                     peakFreqs = 1+i;
                 else
-                    peakFreqs = freq(maxtab(:,1));
+                    peakFreqs = Wxy.freq(maxtab(:,1));
                 end
                 if strcmpi(yScale,'linear')
                     logPeakFreqs = peakFreqs;
-                    freq2 = freq;
+                    freq2 = Wxy.freq;
                 else
                     logPeakFreqs = log2(peakFreqs);
-                    freq2 = log2(freq);
+                    freq2 = log2(Wxy.freq);
                 end
                 switch powerSpectrumType
                     case 'linear'
@@ -417,7 +415,7 @@ for file = 1:nFiles % File Number Loop # 1
             
             %% TIME-VARYING MEAN FREQUENCIES AND XW POWERS
             
-            [mfvec,pfvec] = instantaneouswavefreq(Wxy,freq);
+            [mfvec,pfvec] = instantaneouswavefreq(Wxy,Wxy.freq);
             
             eval(['time_varying_meanfreq_f' num2str(file) 'ch' num2str(ch)...
                 num2str(ch+1) ' = mfvec;']);
@@ -450,7 +448,7 @@ end
 
 %% Averaged XW Plots
 Wxy = W_coi_sig_alt;
-[Wxy_avg,Wxy_iso,masterVar,W_gm,S,S_prelog,Wxy_avg_channels]  = avgxwt(Wxy,freq,Wxy.time,coi,sigMat,isoThresh,ch);
+[Wxy_avg,Wxy_iso,masterVar,W_gm,S,S_prelog,Wxy_avg_channels]  = avgxwt(Wxy,Wxy.freq,Wxy.time,coi,sigMat,isoThresh,ch);
 avgCheck = 1;
 
 
