@@ -10,7 +10,7 @@ if nargin < 3
     errordlg('Minimum 3 inputs reqd');
     return;
 elseif nargin < 4
-    freqRange = [10 200];
+    freqRange = [10 150];
     stringency = 1;
     threshold = 3;
     plotOrNot = 1;
@@ -53,7 +53,7 @@ scaleRange = 1./(freqRange*fourier_factor);
 S0 = min(scaleRange);
 MaxScale = max(scaleRange);
 Args=struct('Pad',1,...      % pad the time series with zeroes (recommended)
-    'Dj',1/64, ...    % this will do 48 sub-octaves per octave
+    'Dj',1/32, ...    % this will do 48 sub-octaves per octave
     'S0',S0,...    % this says start at a scale of 2*dt
     'J1',[],...
     'Mother','Morlet', ...
