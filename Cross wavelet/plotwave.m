@@ -1,6 +1,6 @@
 function plotwave(Wxy, time, period, coi, sig95, sigmax, sigmay)
 % plotwave(wave, time, period, coi, sig95, sigmax, sigmay)
-% plotwave(wave, time, period, coi, sig95, sigmax, sigmay, colorbarlimits)
+% plotwave(..., colorbarlimits)
 % Customized plot of the wavelet transform
 % Adapted from xwt.m by Alsak Grinsted et al.
 % Updated: 01-Mar-2011 02:40:47

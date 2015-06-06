@@ -20,96 +20,65 @@
 %
 
 %% Wavelet Parameters
+Wxy = struct;
+Wxy.dj              = 1/2^6; % (Resolution of wavelet scales. Must be less than 1/10, e.g. 1/24)
+Wxy.pad             = 1; % Zero padding of signals (wave.pad = 1: pad with zeroes; wave.pad = 0: don't zero pad)
+nPhaseBins          = 90; % Number of bins for phase histograms
+Wxy.motherWavelet   = 'Morlet'; %%%('Morlet', 'Paul','DOG') - For now use only Morlet, other wavelets will give erroneous results
+avgCheck            = 0;
+pkDetThr            = 0.25;
+time_axis_xticks    = 'regular'; %('train' - displays the stimulus train, 'regular' - displays time regularly; default:'train')
+figdisp             = 'y'; %%% ('n' = does not display figures; [] = displays figs );
 
-wavelet_scale_resolution = 1/2^6; % (Must at least be 1/10)
-number_of_phase_bins = 90; % Number of bins for phase histograms
-motherWavelet = 'Morlet'; %%%('Morlet', 'Paul','DOG') - For now use only Morlet, other wavelets will give erroneous results
-avgCheck =0;
-peakDetectionThresh = 0.25;
-
-%%  OPTIONS
-
-Pad = 1; % Zero padding of signals (Pad = 1: Pad with zeroes; Pad = 0: Don't zero pad)
-dj = wavelet_scale_resolution; % Wavelet scale resolution (Must be at least 1/10)
-nPhaseBins = number_of_phase_bins; % Number of bins for phase histograms
-
-time_axis_xticks = 'regular'; %('train' - displays the stimulus train, 'regular' - displays time regularly; default:'train')
-figdisp = 'y'; %%% ('n' = does not display figures; [] = displays figs );
-
-
-%% Wavelet Parameters - Derived and Fixed
-fourier_factor = 1.0330; % This is the factor into which wavelet scales
+%% Calculating fixed & derived wavelet parameters
+Wxy.fourierFactor = 1.0330; % This is the factor into which wavelet scales
 % divide to yield frequency values. DO NOT CHANGE THIS VALUE (as long as
 % you are using Morlet with wave# = 6)
-scaleRange = 1./(freqRange*fourier_factor); % Scale range corresponding to frequency range.
-S0 = min(scaleRange);
-MaxScale = max(scaleRange);
+Wxy.scaleRange = 1./(freqRange*Wxy.fourierFactor); % Scale range corresponding to frequency range.
+Wxy.S0 = min(Wxy.scaleRange);
+Wxy.maxScale = max(Wxy.scaleRange);
 
-%% XW Calculations
 if freqRange(2) >= floor(1/samplingInt); errordlg('High frequency value above Nyquist limit'), end
-% lpf = ceil(freqRange(2)/2.5);
+newSamplingFreq = max(freqRange(2)*2.5,20); % This ensures that the new sampling rate is well over twice the largest frequency.
 
-%% Signal Reduction Parameters
-newSamplingFrequency = max(freqRange(2)*2.5,20); % This ensures that the new sampling rate is well over twice the largest frequency.
-
-%% Some processing
-tempSig = eval(['signal' num2str(1) ';']);
-sigMat = zeros(size(tempSig,1),nFiles,size(tempSig,2)); % Third dimension...
-%... of sigMat contain channels, while second the files.
-sigmas = zeros(size(sigMat,2),size(sigMat,3));
-clear tempSig
-for fileNum = 1:nFiles
-    for chNum = 1:size(sigMat,3)
-        eval(['sigMat(:,fileNum,chNum)= signal' num2str(fileNum) '(:,chNum);'])
-        [~,~,sigmas(fileNum,chNum)] = ZscoreByHist(sigMat(:,fileNum,chNum));
-    end
-end
-%% Mean of Standard Deviation of all Signals
-b = mean(sigmas,1);
-c = repmat(b,size(sigmas,1),1);
-sigmas_prenorm = sigmas;
-sigmas = c; % So, the only time sigmas will differ from sigmas_prenorm is of multiple files are loaded
-
-%% Truncating the signal matrix and filtering
-firstTime = time(1); lastTime = time(end);
-time_reduced = time;
-
-
-%% TO PLOT OR NOT TO PLOT
 % plotfig  = questdlg('Would you like to plot time-varying frequencies for individual files?','To Plot or Not to Plot?','No','Yes','No');
 plotfig = 'no';
-%% Convert 3-D matrix of signals into a 2-D matrix
-% Converts the 3-D matrix of signals (data points, files, channels) into a
-% 2-D matrix of signals (data points, [(n file's channels of file1)
-% (n + 1 file's channels)...(Nth file's channels)])
 
-sigMat2 = zeros(size(sigMat,1),size(sigMat,3),size(sigMat,2));
-for chNum = 1:size(sigMat,3)
-    sigMat2(:,chNum,:) = sigMat(:,:,chNum);
+%% Group & normalize signals
+sigMat = zeros(size(data(1).smooth,1),size(data(1).smooth,2),size(data,1)); % T-by-C-by-F matrix,
+% where T = number of time points, C = num of channels, F = num
+% of files
+sigmaxy = zeros(size(sigMat,2),size(sigMat,3));
+for file = 1:size(data,1)
+    for chNum = 1:size(sigMat,2)
+        sigMat(:,chNum,file) = data(file).smooth(:,chNum);
+        sigmaxy(chNum,file) = std(sigMat(:,chNum,file));
+    end
 end
-sigMat2 =reshape(sigMat2,size(sigMat2,1),size(sigMat2,2)*size(sigMat2,3));
-sigMat2 = [time_reduced(:) sigMat2];
+%# Put the signals from each channel end-to-end and compute global std for each channel
+sigmaXY = std(reshape(permute(sigMat,[1 3 2]),size(sigMat,1)*size(sigMat,3),size(sigMat,2)),[],1);
+scaleMat = permute(repmat(repmat(sigmaXY',1,size(sigMat,3))./sigmaxy,[1,1,size(sigMat,1)]),[3 1 2]);
+%# Normalize signals such that global and local stds match
+sigMat = sigMat.*scaleMat;
 
-%% SIGNAL REDUCTION PARAMETERS
-sigMat = reducedata(sigMat,time_reduced,newSamplingFrequency); 
-%% Normalizing Signals when Multiple Files are Loaded 
-% This is so as to apply the same stringency (statistical threshold) to all signals. Important when computing \mathbb{S}^e.
-% b = permute(sigmas,[3 1 2]);
-% c = repmat(b,size(sigMat,1),1);
-% sigMat = sigMat.*c;
+firstTime = data(1).time(1);
+lastTime = data(1).time(end);
 
+%% Subsample the Signals to Speed Computation
+dt = floor((1/samplingInt)/newSamplingFreq);
+sigMat = sigMat(1:dt:end,:,:);
+Wxy.time = linspace(data(1).time(1),data(1).time(end),size(sigMat,1));
+dtr = Wxy.time(2)-Wxy.time(1);
+endPt = Wxy.time(1)+ (dtr*length(Wxy.time));
+Wxy.time = Wxy.time(1):dtr:endPt-dtr; %%% This step is necessary to ensure equal timesteps within Wxy.time!!!
+lenTime  = length(Wxy.time);
 
-%% Slow (Due to Light) Artifact Removal
-% sigMat = slowartifactremove(sigMat) %%%% In case, I want to remove light
-                                      %%%% artifacts from optogenetic
-                                      %%%% trials.
-time_reduced = linspace(time(1),time(end),size(sigMat,1));
-dtr = time_reduced(2)-time_reduced(1);
-endPt = time_reduced(1)+ (dtr*length(time_reduced));
-time_reduced = time_reduced(1):dtr:endPt-dtr; %%% This step is necessary to ensure equal timesteps within time_reduced!!!
-lenTime  = length(time_reduced);
+%% Slow Artifact Removal (optogenetic light signal arifact)
+% sigMat = slowartifactremove(sigMat) %# In case, I want to remove light
+%# artifacts from optogenetic
+%# trials.
 
-%% STATISTICAL PARAMETERS
+%% Statistical Parameters
 level = 2^2; % (default: level = 2)
 threshType = 'sigma'; %('sigma' - thresholds based on std; 'level' -
 % thresholds based on level);
@@ -121,7 +90,7 @@ else
     errordlg('Input for the variable "threshType" not specified properly')
 end
 
-%% TRACE DISPLAY
+%% Trace Display
 if strcmpi(traceType,'smooth')|| strcmpi(traceType,'raw')
 else
     errordlg('Input for the variable "traceType" not specified properly')
@@ -129,244 +98,178 @@ end
 yShifter = 1.5; %(Factor by which the max value of a trace is multiplied...
 % and shifted along the y-axis to prevent overlap; default = 1.5)
 
-%% PHASE DISPLAY
+%% Phase Display
 if strcmpi(phaseType,'alt')|| strcmpi(phaseType,'synch') || strcmpi(phaseType,'all')
 else
     errordlg('Input for the variable "phaseType" not specified properly')
 end
 
-%% POWER SPECTRUM DISPLAY
+%% Power Spectrum Display
 powerSpectrumType = 'both';  %('linear', 'log', 'both', 'none')
 if strcmpi(powerSpectrumType,'linear')|| strcmpi(powerSpectrumType,'log') || strcmpi(powerSpectrumType,'both') || strcmpi(powerSpectrumType,'none')
 else
     errordlg('Input for the variable "powerSpectrumType" not specified properly')
 end
-peakDetectionThresh = 0.1; % This determines the amplitude of a peak in the power spectrum for which a frequency value should be displayed. Setting to a low value detects low peaks and displace their corresponding freq values.
 
 %% XWT
 clear statMat chLabelMat fNamesMat
 nChannelPairs = size(sigMat,3)-1;
-nFiles = size(sigMat,2);
+nFiles = size(sigMat,3);
 endCol = nFiles*nChannelPairs+1;
 statMat = cell(15, nFiles*nChannelPairs + 1 + 2*nChannelPairs);
-% statMat = cell(15, size(sigMat,2)*(size(sigMat,3)-1)+ 1 + 2*(size(ch,2)-1));
 statMat(:,1)= deal({'Peak f','Mean f', 'Std f','Peak Ph', 'Mean Ph', 'Std Ph',...
     'Mean Pow','Std Pow','Synch Pow','Alt Pow','Alt Pow/Synch Pow' ,'Tot Pow','Tot Pow Ratio','Time Range','Freq Range'});
-% chLabelMat =cell(1, size(sigMat,2)*(size(sigMat,3)-1)+1+2*(size(ch,2)-1));
 chLabelMat =cell(1, nFiles*nChannelPairs + 1 + 2*nChannelPairs);
 chLabelMat{1} = 'Channels';
-% fNamesMat =cell(1, size(sigMat,2)*(size(sigMat,3)-1)+1+2*(size(ch,2)-1));
 fNamesMat = cell(1,nFiles*nChannelPairs + 1 + 2*nChannelPairs);
 fNamesMat{1}='File Names';
 cellNum = 1;
 time_varying_power_mat =[];
 fileCounter = 0;
-clear Wxy3d % 3D array with stacking Wxy matrices generated for each pair of channels from each file along the z-dimension
-clear sigxy
+lf = round(log2(Wxy.maxScale/Wxy.S0)/Wxy.dj)+10; % Aribitrarily chose 10
 
-
-
-lf = round(log2(MaxScale/S0)/dj)+10; % Aribitrarily chose 10
-clear W W_coi W_coi_sig W_coi_sig_alt W_temp W_noncoi W_noncoi_sig
-% W = zeros(lf,length(time_reduced),nFiles,length(ch));
-% [W_coi,W_coi_sig,W_coi_sig_alt,W_temp] = deal(W);
-
-for fileNum = 1:nFiles % File Number Loop # 1
-    fStr =['f' num2str(fileNum)];
+W = [];
+for file = 1:nFiles % File Number Loop # 1
+    fStr =['f' num2str(file)];
     fileCounter = fileCounter + 1;
-    chNum =[];
     for chNum = 1:nChannelPairs % Channel Number Loop # 1
-        chStr = ['ch' num2str(ch(chNum)) num2str(ch(chNum+1))];
+        chStr = ['ch' num2str(chList(chNum)) num2str(chList(chNum+1))];
         cellNum = cellNum+1;
         
-        % Start: Normalizing time-series - Jun 06, 2012
-        %                 sigMat(:,fileNum,chNum) = std(sigMat(:,fileNum,chNum))* normalizepdf(sigMat(:,fileNum,chNum));
-        %                 sigMat(:,fileNum,chNum+1) = std(sigMat(:,fileNum,chNum+1))* normalizepdf(sigMat(:,fileNum,chNum+1));
-        % End: Normalizing time-series
+        [Wxy.raw(:,:,file,chNum),period,scale, coi, sig95]= xwt([Wxy.time(:) sigMat(:,chNum,file)],[Wxy.time(:) sigMat(:,chNum+1,file)],...
+            Wxy.pad, Wxy.dj,'S0',Wxy.S0, 'ms', Wxy.maxScale, 'Mother', Wxy.motherWavelet);
         
-        [Wxy,period,scale,coi,sig95]= xwt([time_reduced(:) sigMat(:,fileNum,chNum)],[time_reduced(:) sigMat(:,fileNum,chNum+1)],...
-            Pad, dj,'S0',S0, 'ms',MaxScale, 'Mother', motherWavelet);
+        if file == 1
+            freq =1./period;
+            ftmat = repmat(freq(:), 1, lenTime);
+            coimat = repmat(1./coi(:)',length(freq), 1);
+        end
         
-        %         if fileNum == 1
-        %             W(length(period)+1:lf,:,:,:)=[];
-        %         end
+        temp = Wxy.raw(:,:,file,chNum);
+        temp(ftmat<coimat) = 0; % Removing regions outside of COI
+        Wxy.coi(:,:,file,chNum) = temp;
         
-        W(:,:,fileNum,chNum) = Wxy;
-        
-        %%%%% Normalization procedure so that the same stringency is
-        %%%%% applied to all loaded signals
-        xvar1 = sigmas(fileNum,chNum)* sigmas(fileNum,chNum+1);
-        xvar2 = sigmas_prenorm(fileNum,chNum)* sigmas_prenorm(fileNum,chNum+1);
-        multiplier = xvar2/xvar1;
-        sig95(:,:,fileNum,chNum)= sig95*multiplier;
-        
-        % sig95(:,:,fileNum,chNum)= sig95; %%%% Uncomment this line and
-        % comment the previous one if you want to establish significance
-        % for each signal based on its own std, and not the group mean std.
-        
-        % eval(['sig95' num2str(fileNum) 'ch' num2str(chNum) num2str(chNum+1) '= sig95;'])
-        freq =1./period;
-        ftmat = repmat(freq(:), 1, lenTime);
-        coimat = repmat(1./coi(:)',length(freq), 1);
-        
-        W_temp = W(:,:,fileNum,chNum);       
-        W_temp(ftmat<=coimat) = 0; %%% Removing regions outside of COI        
-        W_coi(:,:,fileNum,chNum)= W_temp;
-        W_noncoi(:,:,fileNum,chNum) = W(:,:,fileNum,chNum);
-        
-        %% SIGMA OR LEVEL-BASED THRESHOLDING
+        %# Sigma or level based thresholding
         if strcmpi(threshType,'sigma')
-            W_temp(sig95(:,:,fileNum,chNum) < stringency) = 0; % (default: sig95 < 1)
-            W_coi_sig(:,:,fileNum,chNum) = (W_temp);
-            W_temp2 = W_noncoi(:,:,fileNum,chNum);
-            W_temp2(sig95(:,:,fileNum,chNum) < stringency) = 0;
+            temp  = Wxy.raw(:,:,file,chNum);
+            temp(sig95 < stringency) = 0;
+            Wxy.sig(:,:,file,chNum) = temp;
+            
+            temp = Wxy.coi(:,:,file,chNum);
+            temp(sig95 < stringency) = 0;
+            Wxy.coi(:,:,file,chNum) = temp;
         elseif strcmpi(threshType,'level')
-            W_temp(W_temp<level) = 0; % Keeps only those values
-            % which are above a certain specified cross power 'level'
-            W_coi_sig(:,:,fileNum,chNum) = W_temp;
+            temp = Wxy.raw(:,:,file,chNum);
+            temp(temp < level) = 0;
+            Wxy.sig(:,:,file,chNum) = temp;
+            
+            temp = Wxy.coi(:,:,file,chNum);
+            temp(temp < level) = 0;
+            Wxy.coi(:,:,file,ch) = temp;
         end
-           Wxy = W_coi_sig(:,:,fileNum,chNum);
-           W_noncoi_sig(:,:,fileNum,chNum) = W_temp2;
         
-        %% PHASE-BASED FILTERING
-        a  = angle(Wxy);
+        %# Phase filtering
+        %         W = Wxy.raw(:,:,file,chNum);
+        Axy  = angle(Wxy.raw(:,:,file,chNum));
         if strcmpi(phaseType,'alt')
-            Wxy(abs(a)<=(0.5*pi))=0; % Keeps only those matrix elements with angles >= (0.75*pi) = 135 deg
-            W_coi_sig_alt(:,:,fileNum,chNum) = Wxy;  % abs(a)is necessary b/c angle(mat)outputs -ve values as well
-            W_temp2(abs(a)<=(0.5*pi))=0; 
+            disp('Filtering out synchronous phases')
+            temp = Wxy.sig(:,:,file,chNum);
+            temp(abs(Axy)<=(0.5*pi)) = 0;
+            Wxy.sig(:,:,file,chNum) = 0;
+            
+            temp = Wxy.coi(:,:,file,chNum);
+            temp(abs(Axy)<=(0.5*pi)) = 0;
+            Wxy.coi(:,:,file,chNum) = temp;
+            
         elseif strcmpi(phaseType,'synch')
-            Wxy(abs(a)>pi/2)=0; % Keeps only those matrix elements with angles <= pi/2
-            W_coi_sig_alt(:,:,fileNum,chNum) = Wxy;  % abs(a)is necessary b/c angle(mat)outputs -ve values as well
-            W_temp2(abs(a)>pi/2)=0;
+            disp('Filtering out alternating phases')
+            temp = Wxy.sig(:,:,file,chNum);
+            temp(abs(Axy)>pi/2) = 0;
+            Wxy.sig(:,:,file,chNum) = temp;
+            
+            temp = Wxy.coi(:,:,file,chNum);
+            temp(abs(Axy)>pi/2) = 0;
+            Wxy.coi(:,:,file,chNum) = temp;
         elseif strcmpi(phaseType,'all')
-            W_coi_sig_alt(:,:,fileNum,chNum)= Wxy;
+            disp('No phase filtering')
         else
-            errordlg('PLEASE CHOOSE PROPER PHASETYPE!!!')
-        end
-        W_noncoi_sig(:,:,fileNum,chNum) = W_temp2;
-
-        %% FREQUENCIES, PHASES, XW POWERS, ETC
-        %       Wxy_bin =Wxy; Wxy_bin(Wxy~=0)=1; % Wxy_bin is a binary matrix created by substituting unity for all non-zero values in Wxy
-        Wxy_prob = abs(Wxy./sum(Wxy(:))); % Each entry in Wxy is expressed as the probability of occurrence of that value within the distribution of all values of Wxy to create Wxy_prob
-        if all(isnan(Wxy_prob(:)))
-            Wxy_prob = zeros(size(Wxy_prob));
+            errordlg('Phase filtering improperly specified!')
         end
         
-        % Calculating mean & std of frequencies
+        %# Estimating freq
+        W = abs(Wxy.sig(:,:,file,chNum));
+        sumFP = ftmat.*W;
+        sumFP = sum(sumFP(:));
+        sumP = abs(Wxy.sig(:,:,file,chNum));
+        sumP = sum(sumP(:));
         
-        %         Wxy_s = sum(Wxy_prob,2);
+        Wxy.meanFreq(file,chNum) = round((sumFP/sumP)*100)/100;
+        Wxy.stdFreq(file,chNum) = circ_std(ftmat(W~=0),W(W~=0));
+        %         Wxy.freqWithMostPow(file,chNum) = round(ftmat(find(W==max(W(:))))*100)/100;
+        Wxy.freqWithMostPow(file,chNum) = 1/period(find(sum(W,2)==max(sum(W,2))));
         
-        Fxy = ftmat; Fxy(Wxy==0)=0;
-        Fxy_prob = Fxy.*Wxy_prob;
-        meanFreqs.(fStr).(chStr) = round(sum(Fxy_prob(:))*100)/100;
-        sigFreqs = Fxy;
-        sigFreqs(Wxy==0)=[];
-        stdFreqs.(fStr).(chStr) = round(std(sigFreqs)*100)/100;
+        %# Computing pow spectrum
+        Wxy.powSpec{file,chNum} = mean(abs(W),2);
+        blah = Wxy.powSpec{file,chNum};
+        blah(blah==0) = nan;
+        Wxy.powSpec_log{file,chNum} = log2(blah);
+        [maxtab,~] = peakdet(Wxy.powSpec{file,chNum},pkDetThr*max(Wxy.powSpec{file,chNum}));
         
-        
-        % Calculating XW power spectrum & Peak Frequency(frequency at which coherent power is highest)
-        arbitraryDivisiveFactor = 1;
-        globalPowSpec.(fStr).(chStr) = sum(abs(Wxy),2) * arbitraryDivisiveFactor;
-        globalPowSpec_maxnorm.(fStr).(chStr) =...
-            globalPowSpec.(fStr).(chStr)/...
-            max(globalPowSpec.(fStr).(chStr)); % Power units indicate cumulative probability
-        normlog_globalPowSpec.(fStr).(chStr) = ...
-            log2(globalPowSpec.(fStr).(chStr));
-        blah = normlog_globalPowSpec.(fStr).(chStr);
-        blah(blah==-inf) = NaN;
-        blah = (blah-min(blah))/(max(blah)-min(blah)); % Normalization by subtracting min and dividing by amplitude
-        normlog_globalPowSpec.(fStr).(chStr) = blah;
-        [maxtab,mintab] = peakdet(globalPowSpec_maxnorm.(fStr).(chStr),peakDetectionThresh);
-        
-        if numel(maxtab) == 0
-            maxtab(:,1)= find(globalPowSpec_maxnorm.(fStr).(chStr) == max(globalPowSpec_maxnorm.(fStr).(chStr)));
-            maxtab(:,2)= globalPowSpec_maxnorm.(fStr).(chStr)(maxtab(:,1));
+        if ~isempty(maxtab)
+            pv = find(maxtab(:,2)== max(maxtab(:,2)));
+            pf = round(freq(maxtab(pv,1))*100)/100;
+        else
+            [maxtab(:,1),maxtab(:,2), pv, pf] = deal(nan);
         end
         
-        pv = find(maxtab(:,2)== max(maxtab(:,2)));
-        pf = round(freq(maxtab(pv,1))*100)/100;
-        
-        if isempty(pv) || isempty(pf)
-            maxtab =[1 1+i];
-            pv = 1;
-            pf= 1+i;
-        end
-        
-        % Calculating mean and std of phases within significant regions
-        
-        Wxy_nonzero_lin = Wxy; Wxy_nonzero_lin(Wxy==0)= []; % This removes all zero elements from the matrix and vectorizes it.
-        if isempty(Wxy_nonzero_lin)
-            Wxy_nonzero_lin = 0.001*(randn(1) + randn(1)*i);
-        end
-        Axy = angle(Wxy_nonzero_lin);
-        
-        nPhaseBins = min([numel(Axy), 90]); % Number of bins circular for phase histograms
-        [ph_dist,th] = hist(Axy(:),nPhaseBins); % Unweighted phase histogram
-        mag = abs(Wxy_nonzero_lin);
-        [ph_dist3,vals] = hist3([Axy(:) mag(:)],[nPhaseBins,nPhaseBins]); % 3D bivariate (phases and power) histogram
+        %# Estimating phase
+        W = Wxy.sig(:,:,file,chNum);
+        W(W==0)=[];
+        nPhaseBins = min([numel(angle(W)), 90]);
+        [Wxy.phaseDist{file,chNum},theta] = hist(angle(W(:)),nPhaseBins); % Unweighted phase histogram
+        [ph_dist3,vals] = hist3([angle(W(:)) abs(W(:))],[nPhaseBins,nPhaseBins]);
         powmat = repmat(vals{2},size(ph_dist3,1),1);
-        ph_dist_wt = ph_dist3.*powmat; % Scaling the number of elements in each bin by power (power-weighting)
-        ph_dist_wt = sum(ph_dist_wt,2)'; % Power-weighted phase histogram
+        Wxy.phaseDistWt{file,chNum} = ph_dist3.*powmat;
+        Wxy.phaseDistWt{file,chNum} = sum(Wxy.phaseDistWt{file,chNum},2)'; % Power-weighted phase histogram
+        mphase = angle(sum(W));
+        mphase(mphase<0) = mphase(mphase<0)+ 2*pi; % 0 to 360 instead of -180 to +180 deg
+        Wxy.meanPhase(file,chNum) = round(mphase*(180/pi)*100)/100;
+        Wxy.stdPhase(file,chNum) = round(100*circ_std(angle(W(:)),abs(W(:)))*(180/pi))/100;
         
-        mphase = angle(sum(Wxy_nonzero_lin)); % Mean phase is the angle of the resultant vector obtained by summing all the wavelet coefficients
-        mphase(mphase<0) = mphase(mphase<0)+ 2*pi; % Addition of 2*pi to -ve values converts angle range from 0 to 360 rather than -180 to +180
-        meanPhases.(fStr).(chStr) = mphase*180/pi; % Converts radians to degrees.
-        meanPhases.(fStr).(chStr) = round(meanPhases.(fStr).(chStr)*100)/100;
-        sphase = circ_std(Axy(:),abs(Wxy_nonzero_lin(:)));
-        stdPhases.(fStr).(chStr) = sphase*180/pi;
-        stdPhases.(fStr).(chStr) = round(stdPhases.(fStr).(chStr)*100)/100;
-        
-        if isempty(ph_dist)
-            theta.(fStr).(chStr) = zeros(size(ph_dist_wt));
-        else
-            ph_dist = [ph_dist(:); ph_dist(1)]; % This will close the loop in polar plot by circularizing the vector.
-            ph_dist_wt = [ ph_dist_wt(:); ph_dist_wt(1)];
-            phase_dist.(fStr).(chStr) = ph_dist./max(ph_dist);
-            phase_dist_weight.(fStr).(chStr) = ph_dist_wt./max(ph_dist_wt);
-            theta.(fStr).(chStr) = [th(:);th(1)];
-            phf = find(phase_dist_weight.(fStr).(chStr)==max(phase_dist_weight.(fStr).(chStr)));
-            if numel(phf)~=0
+        if ~isempty(Wxy.phaseDist{file,chNum})
+            Wxy.phaseDist{file,chNum} = [Wxy.phaseDist{file,chNum}(:); Wxy.phaseDist{file,chNum}(1)]; % Ligates the plot
+            Wxy.phaseDist{file,chNum} = Wxy.phaseDist{file,chNum}/max(Wxy.phaseDist{file,chNum});
+            
+            Wxy.phaseDistWt{file,chNum} = [Wxy.phaseDistWt{file,chNum}(:); Wxy.phaseDistWt{file,chNum}(1)];
+            Wxy.phaseDistWt{file,chNum} = Wxy.phaseDistWt{file,chNum}/max(Wxy.phaseDistWt{file,chNum});
+            
+            Wxy.theta(file,chNum) = {[theta(:); theta(1)]};
+            phf = find(Wxy.phaseDistWt{file,chNum} == max(Wxy.phaseDistWt{file,chNum}));
+            if ~isempty(phf)
                 phf = phf(1);
-            else phf = 1;
+                Wxy.phaseWithMostPow(file,chNum) = round(Wxy.theta{file,chNum}(phf)*180/pi);
+            else
+                Wxy.phaseWithMostPow(file,chNum) = nan;
             end
         end
-        peakPhase.(fStr).(chStr) = round(theta.(fStr).(chStr)(phf)*180/pi);
-        if peakPhase.(fStr).(chStr)<0, peakPhase.(fStr).(chStr) = peakPhase.(fStr).(chStr)+360; end
         
-        % Calculating mean and std of xw power in significant regions
-        altPhases = find(angle(Wxy_nonzero_lin)>pi/2 | angle(Wxy_nonzero_lin)< -pi/2);
-        synchPhases = find(angle(Wxy_nonzero_lin)<= pi/2 & angle(Wxy_nonzero_lin)>= -pi/2);
-        sblah = abs(Wxy_nonzero_lin(synchPhases));
-        synchPowers.(fStr).(chStr) = round(sum(sblah(:))*100)/100;
-        ablah = abs(Wxy_nonzero_lin(altPhases));
-        altPowers.(fStr).(chStr) = round(sum(ablah(:))*100)/100;
-        meanPowers.(fStr).(chStr) = round(mean(abs(Wxy_nonzero_lin))*100)/100;
-        stdPowers.(fStr).(chStr) = round(std(abs(Wxy_nonzero_lin))*100)/100;
-        totalPowers.(fStr).(chStr) = round(sum(abs(Wxy_nonzero_lin)));
-        altSynchPowRatio.(fStr).(chStr) = round((altPowers.(fStr).(chStr)/synchPowers.(fStr).(chStr))*100)/100;
-        if round(totalPowers.(fStr).(chStr)-(synchPowers.(fStr).(chStr)+ altPowers.(fStr).(chStr)))>10
-            errordlg('Synch Pow + Alt Pow ~= Tot Pow');
+        if Wxy.phaseWithMostPow(file,chNum) < 0,
+            Wxy.phaseWithMostPow(file,chNum) = Wxy.phaseWithMostPow(file,chNum)+360;
         end
-        if cellNum==2
-            firstPow = totalPowers.(fStr).(chStr);
-        end
-        totPowRatio.(fStr).(chStr) = round(100*totalPowers.(fStr).(chStr)/firstPow)/100;
-        statMat(:,cellNum)= deal({pf, meanFreqs.(fStr).(chStr),...
-            stdFreqs.(fStr).(chStr),peakPhase.(fStr).(chStr),meanPhases.(fStr).(chStr),...
-            stdPhases.(fStr).(chStr),meanPowers.(fStr).(chStr),...
-            stdPowers.(fStr).(chStr),synchPowers.(fStr).(chStr),...
-            altPowers.(fStr).(chStr),altSynchPowRatio.(fStr).(chStr),totalPowers.(fStr).(chStr),...
-            totPowRatio.(fStr).(chStr),num2str(timeRange),num2str(freqRange)});
-        chLabelMat{cellNum} = ['f' num2str(fileNum) ' ch' num2str(ch(chNum))...
-            num2str(ch(chNum+1))];
-        fNamesMat{cellNum} = fNames(fileNum,:);
+        
+        %# Estimating power
+        Wxy.totPow(file,chNum)  = round(sum(abs(W)));
+        Wxy.totPow_alt(file,chNum) = round(sum(abs(W(angle(W) > pi/2 | angle(W) < -pi/2))));
+        Wxy.totPow_synch(file,chNum) = round(sum(abs(W(angle(W) < pi/2 & angle(W) > -pi/2))));
+        Wxy.meanPow_alt(file,chNum) = round(mean(abs(W(angle(W) > pi/2 | angle(W) < -pi/2))));
+        Wxy.meanPow_synch(file,chNum) = round(mean(abs(W(angle(W) < pi/2 & angle(W) > -pi/2))));
+        Wxy.stdPow_alt(file,chNum) = round(std(abs(W(angle(W) > pi/2 | angle(W) < -pi/2))));
+        Wxy.stdPow_synch(file,chNum) = round(std(abs(W(angle(W) < pi/2 & angle(W) > -pi/2))));
         
         
-        
-        %% PLOTTING FIGURES
-            if lower(figdisp) =='y'
-            
-            figure('Name', ['XW Power, File ' num2str(fileNum) ', Channels '...
+        %# Plotting figures
+        if strcmpi(figdisp,'y')
+            figure('Name', ['XW Power, File ' num2str(file) ', Channels '...
                 num2str(ch(chNum)) ' vs ' num2str(ch(chNum+1))],'color','w','renderer','painter')
             figPos = get(gcf,'position');
             if strcmpi(powerSpectrumType,'none')
@@ -376,7 +279,6 @@ for fileNum = 1:nFiles % File Number Loop # 1
                 set(gcf,'position',[figPos(1)*0.6 figPos(2)-figPos(4)/2 figPos(3)* 1.7...
                     figPos(4)*1.5]);
             end
-            %% XWT AXES
             ax1 = axes; box off
             aPos = get(ax1,'position');
             if strcmpi(powerSpectrumType,'none')
@@ -385,35 +287,21 @@ for fileNum = 1:nFiles % File Number Loop # 1
                 aPos = [aPos(1)*0.8 aPos(2)+ aPos(4)*(1/3) aPos(3)*(0.95) aPos(4)*0.75];
             end
             set(ax1,'position', aPos,'drawmode','fast')
-        end
-                       
-        sig95 = sig95(:,:,fileNum,chNum);
-        Wxy = W_coi_sig_alt(:,:,fileNum,chNum);
-        
-        if lower(figdisp)=='y'
-%             plotwave(Wxy,time_reduced,period,coi,sig95,...
-%                 sigmas(fileNum,chNum), sigmas(fileNum,chNum+1))
-sigmax = sigmas(fileNum,chNum);
-sigmay = sigmas(fileNum,chNum+1);
-          plotwave(W_temp2,time_reduced,period,coi,sig95,...
-                sigmax, sigmay)
-W_coi_sig_alt(:,:,fileNum,chNum) = W_coi_sig_alt(:,:,fileNum,chNum)/(sigmax*sigmay);
+            sigmax = std(sigMat(:,chNum,file));
+            sigmay = sigMat(chNum+1,file);
+            plotwave(Wxy.sig(:,:,file,chNum),Wxy.time,period,coi,sig95, sigmax,sigmay)
             set(ax1,'color','k','xtick',[], 'xcolor','w','ycolor','k','drawmode','fast')
-            xlim([time_reduced(1) time_reduced(end)]) %%%% This line is NECESSARY to ensure that x-axis is aligned with traces below
+            xlim([Wxy.time(1) Wxy.time(end)]) %%%% This line is NECESSARY to ensure that x-axis is aligned with traces below
             xlabel('')
             ylims1 = get(ax1,'ylim');
             yticklabels_ax1 = str2num(get(ax1,'yticklabel'));
             dyticklabels_ax1 = diff(yticklabels_ax1);
-            %         if numel(dyticklabels_ax1)==1,yScale = 'log';
-            %         elseif dyticklabels_ax1(1)== dyticklabels_ax1(2), yScale = 'linear';
-            %         else yScale = 'log';
-            %         end
             yScale = 'log';
             yl = ylabel('Frequency (Hz)','fontsize',14);
             ylpos = get(yl,'pos');
             aPos = get(ax1,'position');
             
-            %% XW POWER SPECTRUM AXES
+            %# XW power spectrum axes
             if strcmpi(powerSpectrumType,'none')
             else
                 ax2 = axes; hold on, box off
@@ -457,14 +345,11 @@ W_coi_sig_alt(:,:,fileNum,chNum) = W_coi_sig_alt(:,:,fileNum,chNum)/(sigmax*sigm
                         set(ax2b,'xtick',xt,'xlim',[0 1]);
                         hold off
                 end
-                
                 set(ax2,'ylim',ylims1,'xlim',[0 1],'xtick',[0.5 1],'ytick',[],'drawmode','fast')
                 xvals = 0.35*ones(size(peakFreqs));
-                
                 clear txt
                 for pf = 1:length(peakFreqs)
                     txt{pf} = [num2str(round(peakFreqs(pf)*100)/100) ' Hz'];
-                    % txt = {round(peakFreqs*100)/100};
                 end
                 
                 text(xvals,logPeakFreqs,txt,'fontsize',11,'color','r','parent',ax2);
@@ -480,8 +365,8 @@ W_coi_sig_alt(:,:,fileNum,chNum) = W_coi_sig_alt(:,:,fileNum,chNum)/(sigmax*sigm
             
             
             if strcmpi(traceType,'raw')
-                fstr = num2str(fileNum);
-                tempSig = eval(['temp' num2str(fileNum) '(:,chNum);']);
+                fstr = num2str(file);
+                tempSig = eval(['temp' num2str(file) '(:,chNum);']);
                 tempSig = truncatedata(tempSig,time,[firstTime lastTime]);
                 
                 tempTime = time; % Adding firstTime to the time vector here
@@ -489,7 +374,7 @@ W_coi_sig_alt(:,:,fileNum,chNum) = W_coi_sig_alt(:,:,fileNum,chNum)/(sigmax*sigm
                 % train to a value of zero
                 
                 plot(tempTime,tempSig + (yShifter/2)*max(tempSig),'k','linewidth',1.5)
-                tempSig = eval(['temp' num2str(fileNum) '(:,chNum+1);']);
+                tempSig = eval(['temp' num2str(file) '(:,chNum+1);']);
                 tempTime = linspace(firstTime,lastTime,length(tempSig));
                 %                 tempSig = zscore(truncatedata(tempSig,time,[firstTime lastTime]));
                 tempSig = truncatedata(tempSig,time,[firstTime lastTime]);
@@ -497,14 +382,14 @@ W_coi_sig_alt(:,:,fileNum,chNum) = W_coi_sig_alt(:,:,fileNum,chNum)/(sigmax*sigm
                     'k','linewidth',1.5)
                 
             elseif strcmpi(traceType,'smooth')
-                tempSig(:,chNum) = zscore(sigMat(:,fileNum,chNum));
+                tempSig(:,ch) = zscore(sigMat(:,chNum,file));
                 tempTime = linspace(firstTime,lastTime,length(tempSig)); % Adding firstTime to the time vector here
                 % will set the time of the first stimulus in the stimulus
                 % train to a value of zero
                 %                 plot(tempTime,tempSig(:,chNum),colors(chNum),'linewidth',1.5)
-                plot(tempTime,tempSig(:,chNum)+2.5,'k','linewidth',1.5)
-                tempSig(:,chNum+1) = zscore(sigMat(:,fileNum,chNum+1));
-                plot(tempTime,tempSig(:,chNum+1)-2.5,'k','linewidth',1.5)
+                plot(tempTime,tempSig(:,ch)+2.5,'k','linewidth',1.5)
+                tempSig(:,ch+1) = zscore(sigMat(:,chNum+1,file));
+                plot(tempTime,tempSig(:,ch+1)-2.5,'k','linewidth',1.5)
             end
             yl2 = ylabel([{'Normalized'};{'Amplitude'}],'fontsize',14,'color','k');
             ylpos2 = get(yl2,'pos');
@@ -526,45 +411,46 @@ W_coi_sig_alt(:,:,fileNum,chNum) = W_coi_sig_alt(:,:,fileNum,chNum)/(sigmax*sigm
                     xlabel(['Stim Train (' num2str(stimDur) 'sec) @ ' num2str(stimFreq) ' Hz'],'fontsize',14)
                     set(ax3,'ytick',[],'xticklabel',[],'xtick',[tStimArts - tStimArts(1)])
                     hold off;
+                    
             end
+            
+            
+            %% TIME-VARYING MEAN FREQUENCIES AND XW POWERS
+            
+            [mfvec,pfvec] = instantaneouswavefreq(Wxy,freq);
+            
+            eval(['time_varying_meanfreq_f' num2str(file) 'ch' num2str(ch)...
+                num2str(ch+1) ' = mfvec;']);
+            eval(['time_varying_pfreq_f' num2str(file) 'ch' num2str(ch)...
+                num2str(ch+1) ' = pfvec;']);
+            tvpower = instantaneouswavepow(Wxy);
+            
+            eval(['time_varying_power_f' num2str(file) 'ch' num2str(ch)...
+                num2str(ch+1) ' = tvpower;']);
+            %         eval(['tvpf_comb' num2str(fileNum) 'ch = tvpower;']);
+            eval(['time_varying_power_mat = [time_varying_power_mat; time_varying_power_f' num2str(file) 'ch' num2str(ch)...
+                num2str(ch+1) '];']);
+            
+            %% OPTION FOR DYNAMIC FREQ AND PHASE PLOTS
+            
+            switch plotfig
+                case 'Yes'
+                    dynamicfreqpowplot
+                case 'No'
+            end
+            
+            
+            Wxy3d.(chStr)(:,:,file) = [Wxy];
+            sigxy.(chStr)(file,:) = sigmaxy(file,ch)* sigmaxy(file,ch+1);
+            
         end
-        
-        
-        %% TIME-VARYING MEAN FREQUENCIES AND XW POWERS
-        
-        [mfvec,pfvec] = instantaneouswavefreq(Wxy,freq);
-        
-        eval(['time_varying_meanfreq_f' num2str(fileNum) 'ch' num2str(chNum)...
-            num2str(chNum+1) ' = mfvec;']);
-        eval(['time_varying_pfreq_f' num2str(fileNum) 'ch' num2str(chNum)...
-            num2str(chNum+1) ' = pfvec;']);
-        tvpower = instantaneouswavepow(Wxy);
-        
-        eval(['time_varying_power_f' num2str(fileNum) 'ch' num2str(chNum)...
-            num2str(chNum+1) ' = tvpower;']);
-        %         eval(['tvpf_comb' num2str(fileNum) 'ch = tvpower;']);
-        eval(['time_varying_power_mat = [time_varying_power_mat; time_varying_power_f' num2str(fileNum) 'ch' num2str(chNum)...
-            num2str(chNum+1) '];']);
-        
-        %% OPTION FOR DYNAMIC FREQ AND PHASE PLOTS
-        
-        switch plotfig
-            case 'Yes'
-                dynamicfreqpowplot
-            case 'No'
-        end
-        
-        
-        Wxy3d.(chStr)(:,:,fileNum) = [Wxy];
-        sigxy.(chStr)(fileNum,:) = sigmas(fileNum,chNum)* sigmas(fileNum,chNum+1);
-        
     end
 end
 
 
 %% Averaged XW Plots
- Wxy = W_coi_sig_alt;
-[Wxy_avg,Wxy_iso,masterVar,W_gm,S,S_prelog,Wxy_avg_channels]  = avgxwt(Wxy,freq,time_reduced,coi,sigMat,isoThresh,ch);
+Wxy = W_coi_sig_alt;
+[Wxy_avg,Wxy_iso,masterVar,W_gm,S,S_prelog,Wxy_avg_channels]  = avgxwt(Wxy,freq,Wxy.time,coi,sigMat,isoThresh,ch);
 avgCheck = 1;
 
 
@@ -690,7 +576,7 @@ answer = 'no';
 if strcmpi(answer,'Yes')
     clear mName
     [master.Data, master.Time,master.Time_reduced, master.statMat] =...
-        deal(dataStruct,timeAxisStruct,time_reduced,statMat);
+        deal(dataStruct,timeAxisStruct,Wxy.time,statMat);
     
     [master.Wxy, master.Wxy_avg, master.meanPhaseVec, master.maxPhaseVec] =...
         deal(Wxy, Wxy_avg, meanPhaseVec, maxPhaseVec);
@@ -698,7 +584,7 @@ if strcmpi(answer,'Yes')
     [master.samplingInt,master.meanPowVec, master.meanFreqVec, master.maxFreqVec] = ...
         deal(samplingInt, tvpower, mfvec, pfvec);
     
-    tm = repmat(time_reduced(:),1,nFiles);
+    tm = repmat(Wxy.time(:),1,nFiles);
     tmat = sigMat;
     tmat(:,:,3) = tm;
     masterVar.Signals = tmat;
