@@ -12,8 +12,7 @@ function varargout = instantaneouswavepow(Wxy)
 %          wavelet scales
 % totPow_maxNorm - Max-normalized version of totPow
 
-
-totPow = sum(abs(Wxy),1)./repmat(size(Wxy,1),1,size(Wxy,2));
+totPow = mean(abs(Wxy),1);
 totPow_maxNorm = totPow/max(totPow);
 
 varargout{2} = totPow;
