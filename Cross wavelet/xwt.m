@@ -51,15 +51,12 @@ function varargout=xwt(x,y,varargin)
 %   routine is provided as is without any express or implied warranties
 %   whatsoever.
 
+% Custom modifications by Avinash Pujala, Janelia Research Campus, 2015
 
-%% --------------- OPTIONS ------ AP (06-Jun-2012)
-sigma_extent = 'full'; % ('select' or 'full'; default: 'full')
+%% Choose background noise type (for statistical significance testing)
 noise_type = 'white'; % ('red' or 'white'; default: 'white')
 
-%% ---------------- End of OPTIONS
-
-
-% ------validate and reformat timeseries.
+%% Validate and reformat timeseries
 [x,dt]=formatts(x);
 [y,dty]=formatts(y);
 if dt~=dty
@@ -106,35 +103,19 @@ if strcmpi(Args.AR1,'auto')
     end
 end
 
-switch lower(sigma_extent)
-    case 'select'
-        fig = figure(101); plot(x(:,2)), hold on, plot(y(:,2),'r')
-        [a,~] = ginput(2);
-        fpt = round(a(1)); lpt = round(a(2));
-        close(fig)
-        sigmax=std(x(fpt:lpt,2));
-        sigmay=std(y(fpt:lpt,2));
-    case 'full'
-
-        [~,~,sigmax] = ZscoreByHist(x(:,2)); % Added on 2-2-2015 (provides better estimation than std(x(:,2)))
-        [~,~,sigmay] = ZscoreByHist(y(:,2));
+% [~,~,sigmax] = ZscoreByHist(x(:,2));
+% [~,~,sigmay] = ZscoreByHist(y(:,2));
+%# Although, ZscoreByHist() will likely provide a better estimate of the true std of a timeseries, I will
+%#  switch back to std() so as to make it consistent with std estimates in other dependent scripts.
+sigmax = std(x(:,2));
+sigmay = std(y(:,2));
 
 
-        % %nx=size(x,1);
-%         sigmax=std(x(:,2));
-%         %
-%         % %ny=size(y,1);
-%         sigmay=std(y(:,2));
-   
-end
-
-
-%%-----------:::::::::::::--------- ANALYZE ----------::::::::::::------------
-
-[X,period,scale,coix] = wavelet(x(:,2),dt,Args.Pad,Args.Dj,Args.S0,Args.J1,Args.Mother);%#ok
+%% Compute crosswavelet
+[X,period,scale,coix] = wavelet(x(:,2),dt,Args.Pad,Args.Dj,Args.S0,Args.J1,Args.Mother);
 [Y,period,scale,coiy] = wavelet(y(:,2),dt,Args.Pad,Args.Dj,Args.S0,Args.J1,Args.Mother);
 
-% truncate X,Y to common time interval (this is first done here so that the coi is minimized)
+%# Truncate X,Y to common time interval (this is first done here so that the coi is minimized)
 dte=dt*.01; %to cricumvent round off errors with fractional timesteps
 idx=find((x(:,1)>=(t(1)-dte))&(x(:,1)<=(t(end)+dte)));
 X=X(:,idx);
@@ -146,49 +127,27 @@ coiy=coiy(idx);
 
 coi=min(coix,coiy);
 
-
-% -------- Cross
-% Wxy=(X.*conj(Y))/(sigmax*sigmay); % Added on 2-2-2015
-Wxy=(X.*conj(Y));
-
-
-% sinv=1./(scale');
-% sinv=sinv(:,ones(1,size(Wxy,2)));
-%
-% sWxy=smoothwavelet(sinv.*Wxy,dt,period,dj,scale);
-% Rsq=abs(sWxy).^2./(smoothwavelet(sinv.*(abs(wave1).^2),dt,period,dj,scale).*smoothwavelet(sinv.*(abs(wave2).^2),dt,period,dj,scale));
-% freq = dt ./ period;
-
-%---- Significance levels
-%Pk1=fft_theor(freq,lag1_1);
-%Pk2=fft_theor(freq,lag1_2);
+Wxy=(X.*conj(Y)); % Not being normalized by division by sigmax*sigmay here.
 
 switch lower(noise_type)
     case 'red'
-        %         Pkx=ar1spectrum(Args.AR1(1),period./dt);
-        %         Pky=ar1spectrum(Args.AR1(2),period./dt); % This is from
-        %         Grinsted et al (2004), but looks fishy and in disagreement with
-        %         Torrence & Compo(1998). So, I modified it (see below)
-        
-        Pkx=ar1spectrum_ap(Args.AR1(1),period);
-        Pky=ar1spectrum_ap(Args.AR1(2),period);
+        %       Pkx=ar1spectrum_ap(Args.AR1(1),period); % This version uses eqn 16
+        %           from Torrence & Compo, 1998, which should be equivalent to
+        %           Grinsted's version, but seems not to be (????)
+        Pkx =ar1spectrum(Args.AR1(1),period./dt);
+        Pky=ar1spectrum(Args.AR1(2),period./dt);
     case 'white'
-        %         Pkx=ar1spectrum(0,period./dt);
-        %         Pky=ar1spectrum(0,period./dt);
-        
-        Pkx=ar1spectrum_ap(0,period);
-        Pky=ar1spectrum_ap(0,period);
+        %       Pkx=ar1spectrum_ap(0,period);
+        Pkx = ar1spectrum(0,period./dt);
+        Pky=ar1spectrum(0,period./dt);
 end
 
-V=1;
+V=2;
 Zv=3.9999; %(default:Zv = 3.999; Grinsted et al., 2004, eqn (5))
 signif=sigmax*sigmay*sqrt(Pkx.*Pky)*Zv/V; % Eqn (5)
-% signif = sqrt(Pkx.*Pky)*Zv/V; % Eqn (5)
-% save mat signif Pkx Pky
 sig95 = (signif')*(ones(1,n));  % expand signif --> (J+1)x(N) array
-sig95 = abs(Wxy) ./ sig95;
+sig95 = abs(Wxy)./sig95;
 if ~strcmpi(Args.Mother,'morlet')
-    
     sig95(:)=nan;
 end
 
@@ -198,7 +157,6 @@ if Args.MakeFigure
         levels = [0.25,0.5,1,2,4,8,16];
         [cout,H]=safecontourf(t,log2(period),log2(abs(Wxy/(sigmax*sigmay))),log2(levels));%,log2(levels));  %*** or use 'contourf3ill'
         cout(1,:)=2.^cout(1,:);
-        
         HCB=colorbarf(cout,H);
         barylbls=rats([0 levels 0]');
         barylbls([1 end],:)=' ';
