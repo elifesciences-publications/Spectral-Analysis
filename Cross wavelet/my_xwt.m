@@ -42,6 +42,7 @@ else
     sigmaxy = varargin{5};
 end
 
+noiseType = 'white'; %('red' or 'white')
 
 %% Fixed parameters & adjustable parameters
 fourier_factor = 1.0330; % Conversion factor for changing wavelet scales to periods.
@@ -109,10 +110,8 @@ end
 if ~ exist('sigmaxy')
 % sigmax = std(x(:,2));
 % sigmay = std(y(:,2));
-[~,muX,sigX] = ZscoreByHist(x(:,2)); % Doing this instead of sigmax*sigmay to avoid div by zero if any of them is zero.
-[~,muY,sigY] = ZscoreByHist(y(:,2));
-sigmax  = (sigX + sigY)/2;
-sigmay = sigmax;
+[~,muX,sigmax] = ZscoreByHist(x(:,2)); 
+[~,muY,sigmay] = ZscoreByHist(y(:,2));
 else
     sigmax = sigmaxy;
     sigmay = sigmaxy;
@@ -146,15 +145,15 @@ Wxy=X.*conj(Y);
 % sigWxy = std(Wxy(:));
 threshWxy = muWxy + threshold*sigWxy;
 
-% Wxy(Wxy < threshWxy) = 0;
-
 
 %---- Significance levels
-%Pk1=fft_theor(freq,lag1_1);
-%Pk2=fft_theor(freq,lag1_2);
-Pkx=ar1spectrum(Args.AR1(1),period./dt);
-Pky=ar1spectrum(Args.AR1(2),period./dt);
-
+if strcmpi(noiseType,'red')
+    Pkx=ar1spectrum(Args.AR1(1),period./dt);
+    Pky=ar1spectrum(Args.AR1(2),period./dt);
+elseif strcmpi(noiseType,'white')
+    Pkx=ar1spectrum(0,period./dt);
+    Pky=ar1spectrum(0,period./dt);
+end
 
 V=2; %(default: V = 2)
 Zv = 3.9999; %(default: Zv = 3.9999)
@@ -165,14 +164,13 @@ if ~strcmpi(Args.Mother,'morlet')
     sig95(:)=nan;
 end
 Wxy(sig95 < stringency)=0;
-Wxy(abs(Wxy) < threshWxy) = 0;
+% Wxy(abs(Wxy) < threshWxy) = 0;
 varargout={Wxy,period,scale,coi,sig95};
 varargout=varargout(1:nargout);
 
 
 
-if plotOrNot
-       
+if plotOrNot       
     %% Calculating XW power spectrum
     powerSpectrum = sum(abs(Wxy),2);
     normPowerSpectrum = powerSpectrum/max(powerSpectrum);
@@ -183,8 +181,7 @@ if plotOrNot
         maxtab(:,1)= find(normPowerSpectrum==max(normPowerSpectrum));
         maxtab(:,2)= normPowerSpectrum(normPowerSpectrum == max(normPowerSpectrum));
     end
-    
-    
+        
     
     %% Plotting Figures
     figure('Name','XWT','color','w')
