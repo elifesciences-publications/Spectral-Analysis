@@ -17,7 +17,6 @@ totPow = mean(abs(Wxy),1);
 totPow_maxNorm = totPow/max(totPow);
 
 
-
 varargout{2} = totPow;
 varargout{1} = totPow_maxNorm;
 varargout{3} = max(abs(Wxy),[],1);

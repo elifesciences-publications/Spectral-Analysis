@@ -177,7 +177,12 @@ hold off
 axes(ax2); hold on
 set(ax2,'color','w');
 xlabel('Power')
-peakFreqs = freq(maxtab(:,1));
+if ~isnan(maxtab(:,1))
+    peakFreqs = freq(maxtab(:,1));
+else
+    peakFreqs = nan;
+end
+
 if strcmpi(yScale,'linear'), plot(powerSpectrum, freq,'k','linewidth',2);
     hold on
     plot(logPowerSpectrum, freq,'k:','linewidth',2)
