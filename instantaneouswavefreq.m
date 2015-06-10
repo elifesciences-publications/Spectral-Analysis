@@ -1,7 +1,10 @@
 
 function varargout = instantaneouswavefreq(Wxy,freq)
-% [mean_instantaneous_freq,peakpower_instantaneous_frequency] =
-% instantaneouswavefreq(Wxy,freq)
+% INSTANTANEOUSWAVEFREQ Computes instantaneous freq from a matrix of
+%   wavelet coefficients
+% mean_instantaneous_freq = instantaneouswavefreq(Wxy,freq);
+% [...,peakpower_instantaneous_frequency] = instantaneouswavefreq(Wxy,freq)
+% [~,~,std_instantaneous_freq] = instantaneouswavefreq(Wxy,freq)
 
 if nargin < 2
     errordlg('At least 2 input variables required')
@@ -21,7 +24,6 @@ end
 
 
 freq = flipud(sort(freq(:))); % Ensures that 'freq' is a col vec with values in descending order
-
 fmat  = repmat(freq,1,size(Wxy,2)); % Matrix where each col is the 
         % freq vector and # of cols = length(time)
 Wxy_abs = abs(Wxy);
@@ -34,6 +36,8 @@ Wxy_tvpow_prob = Wxy_abs./Wxy_tvpow;
 mfvec = sum(fmat.*Wxy_tvpow_prob);
 mfvec(isnan(mfvec))=0;
 
+[~,freq_inst_std] = WeightedStats(fmat,Wxy_tvpow_prob);
+
 maxmat = max(Wxy_abs);
 maxmat = repmat(maxmat,size(Wxy,1),1);
 diffmat = Wxy_abs-maxmat;
@@ -45,3 +49,4 @@ pfvec(isnan(pfvec))=0;
 
 varargout{1} = mfvec;
 varargout{2} = pfvec;
+varargout{3} = freq_inst_std;
