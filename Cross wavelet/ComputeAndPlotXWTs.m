@@ -27,7 +27,7 @@ nPhaseBins          = 90; % Number of bins for phase histograms
 Wxy.motherWavelet   = 'Morlet'; %%%('Morlet', 'Paul','DOG') - For now use only Morlet, other wavelets will give erroneous results
 avgCheck            = 0;
 pkDetThr            = 0.25;
-time_axis_xticks    = 'regular'; %('train' - displays the stimulus train, 'regular' - displays time regularly; default:'train')
+time_axis_xticks    = 'train'; %('train' - displays the stimulus train, 'regular' - displays time regularly; default:'train')
 figdisp             = 'y'; %%% ('n' = does not display figures; [] = displays figs );
 
 %% Calculating fixed & derived wavelet parameters
@@ -368,9 +368,13 @@ for file = 1:nFiles % File Number Loop # 1
                 case 'train'
                     stimtrain % Running this program generates 'tStimArts' a vector of stimulus artifact times
                     xlabel(['Stim Train (' num2str(stimDur) 'sec) @ ' num2str(stimFreq) ' Hz'],'fontsize',14)
-                    set(ax3,'ytick',[],'xticklabel',[],'xtick', tStimArts - tStimArts(1))
+                    set(ax3,'ytick',[],'xticklabel',[],'xtick', tStimArts)
                     hold off;
             end
+            
+            %# Plotting phase histograms
+            figure('Name',['Rose Diagram, file # ' num2str(file) ', Ch ' num2str(ch(chNum)) '-' num2str(ch(chNum+1))],'color','w')
+            PlotPhaseHist(Wxy.phase_hist{file,chNum}, Wxy.phase_hist_wt{file,chNum},Wxy.phase_angles{file,chNum}, Wxy.phase_mean(file,chNum))
             
             
             %% TIME-VARYING MEAN FREQUENCIES AND XW POWERS
