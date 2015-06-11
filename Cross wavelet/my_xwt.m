@@ -42,7 +42,7 @@ else
     sigmaxy = varargin{5};
 end
 
-noiseType = 'white'; %('red' or 'white')
+noiseType = 'red'; %('red' or 'white')
 
 %% Fixed parameters & adjustable parameters
 fourier_factor = 1.0330; % Conversion factor for changing wavelet scales to periods.
