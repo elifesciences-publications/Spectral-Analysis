@@ -28,22 +28,24 @@ elseif nargin < 3
     dj = 1/2^5;
     stringency = 1;
     phaseType = 'all';
-    plotSwitch = 0;
+    plotSwitch = 3;
 elseif nargin < 4
+    freqRange = varargin{3};
     dj = 1/2^5;
     stringency = 1;
     phaseType = 'all';
-    plotSwitch = 0;
+    plotSwitch = 3;
 elseif nargin < 5
+    freqRange = varargin{3};
     stringency = 1;
     phaseType = 'all';
-    plotSwitch = 0;
+    plotSwitch = 1;
 elseif nargin < 6
-    phaseType = 'all';
-    plotSwitch = 0;
     freqRange = varargin{3};
     dj = varargin{4};
     stringency = varargin{5};
+    phaseType = 'all';
+    plotSwitch = 3;      
 elseif nargin > 7
     errordlg('Too many inputs!');
 else
@@ -57,7 +59,7 @@ else
     plotSwitch = varargin{7};
 end
 signal = varargin{1};
-if any(size(signal))==1
+if any(size(signal)==1)
     signal = signal(:);
 elseif size(signal,1)==2
     signal = signal'; % So as to make arrange the different signals along columns
@@ -104,8 +106,8 @@ end
 R = zeros(size(Wxy));
 % B = log2(abs(Wxy)).*sigMat;
 % B = log2(abs(Wxy));
-B = abs(Wxy).^1;
-Wxy = Wxy.^2;
+B = abs(Wxy);
+Wxy = abs(Wxy).^2;
 for tt = 1:size(B,2)
     blah = B(:,tt);
     blah = SubtractMinimalEnvelope(blah);
@@ -113,7 +115,7 @@ for tt = 1:size(B,2)
     peaks = dBlah(1:end-1)>0 & dBlah(2:end)<=0;
     peakInds = find(peaks);
     blah = blah./max(blah);
-    peakInds(blah(peakInds)<0.75)=[];
+    peakInds(blah(peakInds)<0.1)=[];
     R(peakInds,tt) = B(peakInds,tt);
 end
 

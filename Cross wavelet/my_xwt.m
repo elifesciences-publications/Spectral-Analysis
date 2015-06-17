@@ -16,7 +16,7 @@ elseif nargin < 4
     plotOrNot = 1;
 elseif nargin < 5
     freqRange = varargin{1};
-    stringecy = 1;
+    stringency = 1;
     threshold =3;
     plotOrNot = 1;
 elseif nargin < 6
