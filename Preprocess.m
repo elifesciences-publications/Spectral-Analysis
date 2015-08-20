@@ -164,6 +164,7 @@ end
 % temp = cell(nFiles,1);
 % signal = cell(nFiles,1);
 for fileNum = 1:nFiles
+    data(fileNum).fName = fNames{fileNum};
     %%%% Truncating Signals to Common Time Portion
     [fpt,lpt] = deal([]);
     fstr = num2str(fileNum);

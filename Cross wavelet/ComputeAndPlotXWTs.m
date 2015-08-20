@@ -27,7 +27,7 @@ nPhaseBins          = 90; % Number of bins for phase histograms
 Wxy.motherWavelet   = 'Morlet'; %%%('Morlet', 'Paul','DOG') - For now use only Morlet, other wavelets will give erroneous results
 avgCheck            = 0;
 pkDetThr            = 0.25;
-time_axis_xticks    = 'train'; %('train' - displays the stimulus train, 'regular' - displays time regularly; default:'train')
+time_axis_xticks    = 'regular'; %('train' - displays the stimulus train, 'regular' - displays time regularly; default:'train')
 figdisp             = 'y'; %%% ('n' = does not display figures; [] = displays figs );
 
 %% Calculating fixed & derived wavelet parameters
@@ -409,6 +409,12 @@ for file = 1:nFiles % File Number Loop # 1
         end       
     end
 end
+
+%% Save Data
+allData = struct;
+allData.data = data;
+allData.Wxy = Wxy;
+save('allData','allData', '-v7.3');
 
 return;
 
