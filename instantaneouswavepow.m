@@ -3,7 +3,7 @@ function varargout = instantaneouswavepow(Wxy)
 % INSTANTANEOUSWAVEPOW - Computes the total XW power across all frequencies
 %                        at each instant in time.
 % meanPow  = instantaneouswavepow(Wxy);
-% [meanPow, maxPow] = instantaneouswavepow(Wxy);
+% [meanPow, maxPow,stdPow] = instantaneouswavepow(Wxy);
 % Inputs:
 % Wxy - matrix of crosswavelet coefficients across of size w x n, where
 %       w is number of frequency points, and n is the number of time pts.
@@ -13,4 +13,9 @@ function varargout = instantaneouswavepow(Wxy)
 
 varargout{1} = mean(abs(Wxy),1);
 varargout{2} = max(abs(Wxy),[],1);
+<<<<<<< HEAD
 varargout{3} =std(abs(Wxy),[],1);
+=======
+varargout{3} = std(abs(Wxy),[],1);
+
+>>>>>>> f647acd8b8f4c8c1ba144bd4af1504c1afa63822
