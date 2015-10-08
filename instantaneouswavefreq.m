@@ -9,8 +9,8 @@ if nargin < 2
 end
 
 if isreal(Wxy)
-%     errordlg('First input variable must be a matrix of complex wavelet coefficients!')
-%     return
+    %     errordlg('First input variable must be a matrix of complex wavelet coefficients!')
+    %     return
 elseif numel(freq)==1
     errordlg('2nd input variable must be a vector!')
     return
@@ -22,12 +22,12 @@ end
 
 freq = flipud(sort(freq(:))); % Ensures that 'freq' is a col vec with values in descending order
 
-fmat  = repmat(freq,1,size(Wxy,2)); % Matrix where each col is the 
-        % freq vector and # of cols = length(time)
+fmat  = repmat(freq,1,size(Wxy,2)); % Matrix where each col is the
+% freq vector and # of cols = length(time)
 Wxy_abs = abs(Wxy);
 fmat(Wxy_abs==0)=0;
-tvpow =sum(Wxy_abs); % Vector of length = length(time), where each 
-           % entry is the total power at all frequencies at each time point
+tvpow =sum(Wxy_abs); % Vector of length = length(time), where each
+% entry is the total power at all frequencies at each time point
 Wxy_tvpow = repmat(tvpow,size(Wxy,1),1);
 Wxy_tvpow_prob = Wxy_abs./Wxy_tvpow;
 
@@ -45,3 +45,20 @@ pfvec(isnan(pfvec))=0;
 
 varargout{1} = mfvec;
 varargout{2} = pfvec;
+
+if nargout ==3
+    maxF = zeros(1,size(Wxy,2));
+    for t = 1:size(Wxy,2)
+        gps = sqrt(abs(Wxy(:,t)));
+        pks = findpeaks_hht(gps);
+        pks(gps(pks)<20) = [];
+        if ~isempty(pks)         
+            maxFInd = find(freq == max(freq(pks)));
+            maxF(t) = freq(maxFInd);
+        else
+            maxF(t) = 0;
+        end
+    end
+varargout{3} = maxF;    
+end
+
