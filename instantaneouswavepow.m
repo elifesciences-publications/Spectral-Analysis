@@ -13,9 +13,7 @@ function varargout = instantaneouswavepow(Wxy)
 
 varargout{1} = mean(abs(Wxy),1);
 varargout{2} = max(abs(Wxy),[],1);
-<<<<<<< HEAD
-varargout{3} =std(abs(Wxy),[],1);
-=======
-varargout{3} = std(abs(Wxy),[],1);
 
->>>>>>> f647acd8b8f4c8c1ba144bd4af1504c1afa63822
+varargout{3} =std(abs(Wxy),[],1);
+
+
