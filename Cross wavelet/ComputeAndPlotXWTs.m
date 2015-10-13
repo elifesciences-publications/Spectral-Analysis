@@ -129,6 +129,7 @@ fileCounter = 0;
 lf = round(log2(Wxy.maxScale/Wxy.S0)/Wxy.dj)+10; % Aribitrarily chose 10
 
 W = [];
+emptyBool = false;
 for file = 1:nFiles % File Number Loop # 1
     fStr =['f' num2str(file)];
     fileCounter = fileCounter + 1;
@@ -179,7 +180,7 @@ for file = 1:nFiles % File Number Loop # 1
             disp('Filtering out synchronous phases')
             temp = Wxy.sig(:,:,file,chNum);
             temp(abs(Axy)<=(0.5*pi)) = 0;
-            Wxy.sig(:,:,file,chNum) = 0;
+            Wxy.sig(:,:,file,chNum) = temp;
             
             temp = Wxy.coi(:,:,file,chNum);
             temp(abs(Axy)<=(0.5*pi)) = 0;
@@ -195,13 +196,13 @@ for file = 1:nFiles % File Number Loop # 1
             temp(abs(Axy)>pi/2) = 0;
             Wxy.coi(:,:,file,chNum) = temp;
         elseif strcmpi(phaseType,'all')
-            disp('No phase filtering')
+            %             disp('No phase filtering')
         else
             errordlg('Phase filtering improperly specified!')
         end
         
         %# Extract relevant info from Wxy
-        waveData = GetWaveData(Wxy.sig(:,:,file,chNum), freq);
+        waveData = GetWaveData(Wxy.sig(:,:,file,chNum), Wxy.freq);
         fldNames = fieldnames(waveData);
         for fn = 1:length(fldNames)
             fldName = fldNames{fn};
@@ -209,6 +210,13 @@ for file = 1:nFiles % File Number Loop # 1
         end
         
         %# Plotting figures
+        blah = Wxy.sig(:,:,file,chNum);
+        blah(blah==0)=[];
+        
+        if isempty(blah)
+            emptyBool = true;
+            disp(['XW for file # ' num2str(file) ' and ch pair ' num2str(ch(chNum)) '-' num2str(ch(chNum+1)) ' not plotted because Wxy is empty!'])
+        end
         if strcmpi(figdisp,'y')
             figure('Name', ['XW Power, File ' num2str(file) ', Channels '...
                 num2str(ch(chNum)) ' vs ' num2str(ch(chNum+1))],'color','w','renderer','painter')
@@ -228,10 +236,6 @@ for file = 1:nFiles % File Number Loop # 1
                 aPos = [aPos(1)*0.8 aPos(2)+ aPos(4)*(1/3) aPos(3)*(0.95) aPos(4)*0.75];
             end
             set(ax1,'position', aPos,'drawmode','fast')
-            if file == 11
-                pause(0.5)
-            end
-            
             plotwave(Wxy.sig(:,:,file,chNum),Wxy.time,period,coi,sig95)
             set(ax1,'color','k','xtick',[], 'xcolor','w','ycolor','k','drawmode','fast')
             xlim([Wxy.time(1) Wxy.time(end)]) %%%% This line is NECESSARY to ensure that x-axis is aligned with traces below
@@ -245,7 +249,7 @@ for file = 1:nFiles % File Number Loop # 1
             aPos = get(ax1,'position');
             
             %# XW spectrum
-            if ~strcmpi(powerSpectrumType,'none')            
+            if ~strcmpi(powerSpectrumType,'none')
                 ax2 = axes; hold on, box off
                 aPos2 = get(ax2,'pos');
                 aPos2 = [aPos(1) + aPos(3) aPos(2) aPos2(3)*(0.15) aPos(4)];
@@ -269,7 +273,7 @@ for file = 1:nFiles % File Number Loop # 1
                 switch powerSpectrumType
                     case 'linear'
                         plot(Wxy.powSpec{file,chNum}, freq2,'k','linewidth',2)
-                        leg = {'Linear Spectrum'}
+                        leg = {'Linear Spectrum'};
                     case 'log'
                         plot(Wxy.powSpec_log{file,chNum},freq2,'k','linewidth',2)
                         %                         set(ax2,'xtick',[],'xcolor','w','drawmode','fast')
@@ -287,24 +291,32 @@ for file = 1:nFiles % File Number Loop # 1
                         leg ={'Linear'; 'Log'};
                         ax2b = axes('position',aPos2,'xaxislocation','top',...
                             'yaxislocation','right','tickdir','out','color','none','ytick',[],'ycolor','w','fontsize',11);
-                        xLim = [min(Wxy.pow_spec_log{file,chNum}),max(Wxy.pow_spec_log{file,chNum})];
-                        xTicks = linspace(xLim(1),xLim(2),3);
-                        xtl = round((2.^xTicks)*10)/10;
-                        set(ax2b,'xtick',xTicks,'xticklabel',xtl,'xlim',xLim);
+                        
+                        if ~emptyBool
+                            xLim = [min(Wxy.pow_spec_log{file,chNum}),max(Wxy.pow_spec_log{file,chNum})];
+                            xTicks = linspace(xLim(1),xLim(2),3);
+                            xtl = round((2.^xTicks)*10)/10;
+                            if ~any(isnan(xTicks))
+                                set(ax2b,'xtick',xTicks,'xticklabel',xtl,'xlim',xLim);
+                            end
+                        end
                         hold off
                 end
+                if ~emptyBool
                 xLim = [min(Wxy.pow_spec{file,chNum}), max(Wxy.pow_spec{file,chNum})];
                 xTicks = linspace(xLim(1),xLim(2),3);
                 xtl = round(xTicks*10)/10;
                 set(ax2,'ylim',ylims1,'xlim',[xTicks(1), xTicks(end)],...
                     'xtick',xTicks,'xticklabel',xtl,'ytick',[],'drawmode','fast')
                 xvals = 0.35*ones(size(peakFreqs));
+              
                 clear txt
                 for pkFrq = 1:length(peakFreqs)
                     txt{pkFrq} = [num2str(round(peakFreqs(pkFrq)*100)/100) ' Hz'];
                 end
                 text(xvals,logPeakFreqs,txt,'fontsize',11,'color','r','parent',ax2);
                 legend(ax2,leg,'fontsize',10) % This line needs to be here to legend can be moved by hand after fig is generated
+                end
             end
             
             %% TIME SERIES AXES
@@ -321,7 +333,7 @@ for file = 1:nFiles % File Number Loop # 1
                 
                 plot(data(1).time,tempSig + (yShifter/2)*max(tempSig),'k','linewidth',1.5)
                 %                 tempSig = eval(['temp' num2str(file) '(:,chNum+1);']);
-                tempSig = data(file).hp(:,chNum+1)
+                tempSig = data(file).hp(:,chNum+1);
                 tempTime = linspace(firstTime,lastTime,length(tempSig));
                 %                 tempSig = zscore(truncatedata(tempSig,time,[firstTime lastTime]));
                 tempSig = truncatedata(tempSig,data(1).time,[firstTime lastTime]);
@@ -356,9 +368,13 @@ for file = 1:nFiles % File Number Loop # 1
                 case 'train'
                     stimtrain % Running this program generates 'tStimArts' a vector of stimulus artifact times
                     xlabel(['Stim Train (' num2str(stimDur) 'sec) @ ' num2str(stimFreq) ' Hz'],'fontsize',14)
-                    set(ax3,'ytick',[],'xticklabel',[],'xtick',[tStimArts - tStimArts(1)])
+                    set(ax3,'ytick',[],'xticklabel',[],'xtick', tStimArts)
                     hold off;
             end
+            
+            %# Plotting phase histograms
+            figure('Name',['Rose Diagram, file # ' num2str(file) ', Ch ' num2str(ch(chNum)) '-' num2str(ch(chNum+1))],'color','w')
+            PlotPhaseHist(Wxy.phase_hist{file,chNum}, Wxy.phase_hist_wt{file,chNum},Wxy.phase_angles{file,chNum}, Wxy.phase_mean(file,chNum))
             
             
             %% TIME-VARYING MEAN FREQUENCIES AND XW POWERS
@@ -389,9 +405,16 @@ for file = 1:nFiles % File Number Loop # 1
             %             Wxy3d.(chStr)(:,:,file) = [Wxy];
             %             sigxy.(chStr)(file,:) = sigmaxy(file,ch)* sigmaxy(file,ch+1);
             
-        end
+        emptyBool = false;
+        end       
     end
 end
+
+%% Save Data
+allData = struct;
+allData.data = data;
+allData.Wxy = Wxy;
+save('allData','allData', '-v7.3');
 
 return;
 

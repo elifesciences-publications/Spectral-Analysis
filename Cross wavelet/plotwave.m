@@ -132,7 +132,11 @@ else
     tidx=max(floor(phs_dt/2),1):phs_dt:length(time);
     phs_dp=round(length(freq)/arrowDensity(2));
     pidx=max(floor(phs_dp/2),1):phs_dp:length(period);
-    phaseplot(time(tidx),log2(freq(pidx)),aWxy(pidx,tidx),arrowSize,arrowHeadSize);
+    blah = CData;
+    blah(isnan(blah))=[];
+    if ~isempty(blah)
+        phaseplot(time(tidx),log2(freq(pidx)),aWxy(pidx,tidx),arrowSize,arrowHeadSize);
+    end    
 end
 
 %% Contour plot for significant regions - Commented this part out on 1.26.2010 to simplify emf fig modification

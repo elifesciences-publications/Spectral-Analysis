@@ -1,4 +1,4 @@
-function [waveData] = GetWaveData(Wxy,freq)
+function waveData = GetWaveData(Wxy,freq)
 %GetWaveData Extract some pertinent information from wavelet coefficient
 %   matrix and append as fields to the structure variable 'waveData'
 % Inputs:
@@ -10,11 +10,10 @@ function [waveData] = GetWaveData(Wxy,freq)
 %   information extracted from Wxy.
 
 
-if any(isreal(Wxy))
-    errordlg('Entries in Wxy must be complex!')
+if all(isreal(Wxy))
+    disp('Entries in Wxy must be complex!')
 elseif isempty(Wxy)
-    disp('Empty coefficient matrix')
-    return
+    disp('Empty coefficient matrix')    
 end
 
 %% Extracting frequency info
@@ -25,13 +24,15 @@ sumFP = sum(ftmat(:).*W(:));
 sumP = sum(W(:));
 
 waveData.freq_mean = round((sum(ftmat(:).*W(:))/sumP)*100)/100;
-waveData.freq_std = circ_std(ftmat(W~=0),W(W~=0));
+[~,waveData.freq_std] = WeightedStats(ftmat(W~=0),W(W~=0));
 
-try
-    waveData.freq_mostPow = round(freq(find(sum(W,2)==max(sum(W,2))))*100)/100;
-catch
+waveData.freq_mostPow = round(freq(find(sum(W,2)==max(sum(W,2))))*100)/100;
+if isempty(waveData.freq_mostPow)
     waveData.freq_mostPow = nan;
+elseif numel(waveData.freq_mostPow) > 1
+    waveData.freq_mostPow = mean(waveData.freq_mostPow(:));    
 end
+   
 
 %% Computing pow spectrum
 waveData.pow_spec = {mean(abs(W),2)};
@@ -78,7 +79,10 @@ if ~isempty(waveData.phase_hist)
         waveData.phase_mostPow = nan;
     end
 else
+    waveData.phase_hist = {nan};
+    waveData.phase_hist_wt = {nan};
     waveData.phase_mostPow = nan;
+    waveData.phase_angles = {nan};
 end
 
 if waveData.phase_mostPow < 0
@@ -96,5 +100,12 @@ waveData.pow_mean_synch = round(mean(abs(W(angle(W) < pi/2 & angle(W) > -pi/2)))
 waveData.pow_std_alt = round(std(abs(W(angle(W) > pi/2 | angle(W) < -pi/2))));
 waveData.pow_std_synch = round(std(abs(W(angle(W) < pi/2 & angle(W) > -pi/2))));
 
+%% Time-varying parameters
+[waveData.freq_inst_mean{1},waveData.freq_inst_pkPow{1}, waveData.freq_inst_std{1}] ...
+    = instantaneouswavefreq(Wxy,freq);
+[waveData.pow_inst_mean{1}, waveData.pow_inst_max{1}, waveData.pow_inst_std{1}] = instantaneouswavepow(Wxy);
+[waveData.phase_inst_mean{1},waveData.phase_inst_pkPow{1},waveData.phase_inst_std{1}] ...
+    = instantaneouswavephase(Wxy);
+    
 end
 

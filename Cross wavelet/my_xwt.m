@@ -12,17 +12,21 @@ if nargin < 3
 elseif nargin < 4
     freqRange = [10 150];
     stringency = 1;
-    threshold = 3;
+    threshold = 0;
     plotOrNot = 1;
 elseif nargin < 5
     freqRange = varargin{1};
     stringency = 1;
+<<<<<<< HEAD
+    threshold = 0;
+=======
     threshold =3;
+>>>>>>> f647acd8b8f4c8c1ba144bd4af1504c1afa63822
     plotOrNot = 1;
 elseif nargin < 6
     freqRange = varargin{1};
     stringency = varargin{2};
-    threshold = 3;
+    threshold = 0;
     plotOrNot = 1;
 elseif nargin < 7
     freqRange = varargin{1};
@@ -110,8 +114,15 @@ end
 if ~ exist('sigmaxy')
 % sigmax = std(x(:,2));
 % sigmay = std(y(:,2));
+<<<<<<< HEAD
+% [~,muX,sigX] = ZscoreByHist(x(:,2)); % Doing this instead of sigmax*sigmay to avoid div by zero if any of them is zero.
+% [~,muY,sigY] = ZscoreByHist(y(:,2));
+sigmax  = std(x(:,2));
+sigmay = std(y(:,2));
+=======
 [~,muX,sigmax] = ZscoreByHist(x(:,2)); 
 [~,muY,sigmay] = ZscoreByHist(y(:,2));
+>>>>>>> f647acd8b8f4c8c1ba144bd4af1504c1afa63822
 else
     sigmax = sigmaxy;
     sigmay = sigmaxy;
@@ -147,6 +158,15 @@ threshWxy = muWxy + threshold*sigWxy;
 
 
 %---- Significance levels
+<<<<<<< HEAD
+%Pk1=fft_theor(freq,lag1_1);
+%Pk2=fft_theor(freq,lag1_2);
+Pkx=ar1spectrum(Args.AR1(1),period./dt);
+Pky=ar1spectrum(Args.AR1(2),period./dt);
+
+% Pkx=ar1spectrum(Args.AR1(1),period);
+% Pky=ar1spectrum(Args.AR1(2),period);
+=======
 if strcmpi(noiseType,'red')
     Pkx=ar1spectrum(Args.AR1(1),period./dt);
     Pky=ar1spectrum(Args.AR1(2),period./dt);
@@ -154,6 +174,7 @@ elseif strcmpi(noiseType,'white')
     Pkx=ar1spectrum(0,period./dt);
     Pky=ar1spectrum(0,period./dt);
 end
+>>>>>>> f647acd8b8f4c8c1ba144bd4af1504c1afa63822
 
 V=2; %(default: V = 2)
 Zv = 3.9999; %(default: Zv = 3.9999)
