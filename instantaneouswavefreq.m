@@ -24,14 +24,12 @@ end
 
 
 freq = flipud(sort(freq(:))); % Ensures that 'freq' is a col vec with values in descending order
-<<<<<<< HEAD
 
 fmat  = repmat(freq,1,size(Wxy,2)); % Matrix where each col is the
 % freq vector and # of cols = length(time)
-=======
+
 fmat  = repmat(freq,1,size(Wxy,2)); % Matrix where each col is the 
         % freq vector and # of cols = length(time)
->>>>>>> 1c72df3d3fae457e74291cbf83da9c6497af2cf8
 Wxy_abs = abs(Wxy);
 fmat(Wxy_abs==0)=0;
 tvpow =sum(Wxy_abs); % Vector of length = length(time), where each
@@ -55,7 +53,6 @@ pfvec(isnan(pfvec))=0;
 
 varargout{1} = mfvec;
 varargout{2} = pfvec;
-<<<<<<< HEAD
 
 if nargout ==3
     maxF = zeros(1,size(Wxy,2));
@@ -73,6 +70,4 @@ if nargout ==3
 varargout{3} = maxF;    
 end
 
-=======
 varargout{3} = freq_inst_std;
->>>>>>> 1c72df3d3fae457e74291cbf83da9c6497af2cf8
