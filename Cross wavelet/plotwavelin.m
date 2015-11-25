@@ -60,7 +60,7 @@ clim=[0 0.9]*max(clim(2)); %%
 
 % clim = [-9 9]; % default= [-9 9] - AP
 clim = fix(clim);
-set(gca,'clim',clim);
+% set(gca,'clim',clim);
 
 %% Colorbar
 % HCB=safecolorbar;

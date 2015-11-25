@@ -2,19 +2,19 @@
 function varargout = instantaneouswavepow(Wxy)
 % INSTANTANEOUSWAVEPOW - Computes the total XW power across all frequencies
 %                        at each instant in time.
-% totPow_maxNorm  = instantaneouswavepow(Wxy);
-% [totPow_maxNorm, totPow] = instantaneouswavepow(Wxy);
+% meanPow  = instantaneouswavepow(Wxy);
+% [meanPow, maxPow,stdPow] = instantaneouswavepow(Wxy);
 % Inputs:
 % Wxy - matrix of crosswavelet coefficients across of size w x n, where
 %       w is number of frequency points, and n is the number of time pts.
 % Outputs:
-% totPow - Pan-spectral total power at each point n, normalized by # of
-%          wavelet scales
-% totPow_maxNorm - Max-normalized version of totPow
+% meanPow - Mean power across all frequencies at each point time point
+% maxPow - Max power ... at each time point
 
+varargout{1} = mean(abs(Wxy),1);
+varargout{2} = max(abs(Wxy),[],1);
 
-totPow = sum(abs(Wxy),1)./repmat(size(Wxy,1),1,size(Wxy,2));
-totPow_maxNorm = totPow/max(totPow);
+varargout{3} =std(abs(Wxy),[],1);
 
-varargout{2} = totPow;
-varargout{1} = totPow_maxNorm;
+varargout{3} = std(abs(Wxy),[],1);
+

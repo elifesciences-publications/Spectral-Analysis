@@ -1,13 +1,12 @@
-function plotwave(Wxy, time, period, coi, sig95, sigmax, sigmay)
-% plotwave(wave, time, period, coi, sig95, sigmax, sigmay)
-% plotwave(wave, time, period, coi, sig95, sigmax, sigmay, colorbarlimits)
+function plotwave(Wxy, time, period, coi, sig95)
+% plotwave(wave, time, period, coi, sig95)
 % Customized plot of the wavelet transform
 % Adapted from xwt.m by Alsak Grinsted et al.
-% Updated: 01-Mar-2011 02:40:47
+% Modified by Avinash Pujala, 2015
 
 %% Some variables
 CData = Wxy;
-% CData(CData==0)=nan;
+CData(CData==0)=nan;
 arrowDensity =[18 18]; % default [25 25]
 ad = mean(arrowDensity);
 arrowSize = 1*30.*0.03/ad;
@@ -19,10 +18,10 @@ coiType = 'none'; % ('fill' - fills the coi with specified color;
 %  'none' - does not fill the coi)
 plotcoi = 'yes'; %('yes' - plots coi)
 coiLineColor = 'w';
-colorScheme = 'jet'; % AP code
+colorScheme = 'jet'; 
 plotMode = 'f'; %('f' for plotting Y-axis as frequency, 'p' for plotting
 % ... Y-axis as period)
-sig_level_for_phases = 0.5; % Added this line so that phases can only be displayed for sig regions - AP
+% sig_level_for_phases = 0.5; % Added this line so that phases can only be displayed for sig regions - AP
 
 if strcmpi (plotMode, 'f')
     freq = 1./period;
@@ -33,7 +32,7 @@ else
     error('Check plot mode: Frequency or period?')
 end
 time = time(:);
-if nargin <7
+if nargin < 5
     error('Not enough input arguments')
 end
 dt = time(2)-time(1);
@@ -43,18 +42,17 @@ dt = time(2)-time(1);
 if strcmpi(ordinateType,'linear')
      Yticks = fix(min(freq)):fix(max(freq));
 %     H=imagesc(time,freq,log2(abs(CData/(sigmax*sigmay))));
-     Wxy_variance_normalized = log2(abs(CData/(sigmax*sigmay)));
+     Wxy_variance_normalized = log2(abs(CData));
      Wxy_max_normalized = Wxy_variance_normalized/max(Wxy_variance_normalized(:));   
      H= contourf(time,freq,Wxy_max_normalized); shading flat
     colormap(colorScheme)
 else
     Yticks = 2.^(fix(log2(min(freq))):fix(log2(max(freq))));
-    H=imagesc(time,log2(freq),log2(abs(CData/(sigmax*sigmay))));
-
-    colormap(colorScheme) % AP code
+    H=imagesc(time,log2(freq),log2(abs(CData)));
+    colormap(colorScheme)
 end
 clim=get(gca,'clim'); % center color limits around log2(1)=0
-clim=[-1 1]*max(clim(2),12); %% ok
+clim=[-1 1]*max(clim(2),9); %% ok
 % clim = [-9 9]; % default= [-9 9] - AP
 clim = fix(clim);
 set(gca,'clim',clim);
@@ -119,7 +117,7 @@ hold on
 % AP code. Added the next 3 lines so as to display arrows only in
 % significant regions
 CData_sig = CData;
-CData_sig(sig95 < sig_level_for_phases)=nan;
+% CData_sig(sig95 < sig_level_for_phases)=nan;
 aWxy=angle(CData_sig);
 
 %% Adding phases to figure
@@ -134,7 +132,11 @@ else
     tidx=max(floor(phs_dt/2),1):phs_dt:length(time);
     phs_dp=round(length(freq)/arrowDensity(2));
     pidx=max(floor(phs_dp/2),1):phs_dp:length(period);
-    phaseplot(time(tidx),log2(freq(pidx)),aWxy(pidx,tidx),arrowSize,arrowHeadSize);
+    blah = CData;
+    blah(isnan(blah))=[];
+    if ~isempty(blah)
+        phaseplot(time(tidx),log2(freq(pidx)),aWxy(pidx,tidx),arrowSize,arrowHeadSize);
+    end    
 end
 
 %% Contour plot for significant regions - Commented this part out on 1.26.2010 to simplify emf fig modification

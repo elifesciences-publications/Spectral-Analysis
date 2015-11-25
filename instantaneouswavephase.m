@@ -33,5 +33,5 @@ if nouts > 2
     end
     stdPhases(stdPhases<0)= 2*pi + (stdPhases(stdPhases<0));
     stdPhases = (180/pi)*stdPhases;
-    varargout{1} = stdPhases;
+    varargout{1} = stdPhases';
 end

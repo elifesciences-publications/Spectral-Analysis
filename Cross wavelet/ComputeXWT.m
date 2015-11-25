@@ -1,7 +1,7 @@
 function varargout = ComputeXWT(varargin)
 
 % My custom written XWT based on xwt.m by Grinsted et al
-% [Wxy,freq,coi,sig95] = ComputeXWT(x,y,time,freqRange,dj,stringency,phaseType);
+% [Wxy,freq,coi,sig95] = ComputeXWT(x,y,time,freqRange,dj,stringency,phaseType,sigmaXY);
 
 %% Fixed and variable parameters
 fourier_factor      = 1.0330; % Conversion factor for changing wavelet scales to periods (true for wavenumber = 6)
@@ -35,6 +35,11 @@ elseif nargin == 7
     dj = varargin{5};
     stringency = varargin{6};
     phaseType = varargin{7};
+elseif nargin == 8
+     dj = varargin{5};
+    stringency = varargin{6};
+    phaseType = varargin{7};
+    sigmaXY = varargin{8};
 else
     errordlg('Too many inputs')
     return;
@@ -91,9 +96,13 @@ x = [time(:) x(:)];
 y = [time(:) y(:)];
 [Wxy,period,~,coi,sig95]= xwt(x,y,Pad, dj,'S0',S0, 'ms',MaxScale, 'Mother', motherWavelet);
 freq =1./period;
-[~,~,sigmaX] = ZscoreByHist(x(:,2));
+if nargin ==8
+    Wxy = Wxy/sigmaXY;
+else
+    [~,~,sigmaX] = ZscoreByHist(x(:,2));
 [~,~,sigmaY] = ZscoreByHist(y(:,2));
 Wxy = Wxy./(sigmaX*sigmaY);
+end
 
 %% Removing regions outside COI
 ftmat = repmat(freq(:), 1, length(time));

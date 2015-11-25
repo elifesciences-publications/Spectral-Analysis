@@ -32,21 +32,23 @@ end
 
 %% Comparing Signal Lengths to Determine the Smallest Permissible Common Signal Length
 minMat=[]; maxMat =[]; loopCounter = 0;
-clear data
-data(nFiles,1) = struct;
-time = cell(nFiles,1);
+[data,time] = deal(cell(nFiles,1));
 for fileNum = 1:nFiles
-    data(fileNum).raw = dataStruct.(fNames{fileNum,:});
-    time{fileNum} = timeAxisStruct.(fNames{fileNum,:});
+    data = dataStruct.(fNames{fileNum,:});
+    timeAxis = timeAxisStruct.(fNames{fileNum,:});
     if loopCounter < 1 % This is to prevent asking for artifact detection mode repeatedly by applying the first detection mode to all the files
-        [data(fileNum).raw,time{fileNum},~,selection] = artifactalign(data(fileNum).raw,time{fileNum});
+        [data,timeAxis,tStimArts,selection] = artifactalign(data,timeAxis);
     else
-        [data(fileNum).raw,time{fileNum}] = artifactalign(data(fileNum).raw,time{fileNum},selection);
+        [data,timeAxis] = artifactalign(data,timeAxis,selection);
     end
-    minMat =[minMat; time{fileNum}(1)];
-    maxMat =[maxMat; time{fileNum}(end)];    
+    eval(['data' num2str(fileNum) '= data;']);
+    eval(['time' num2str(fileNum) '= timeAxis;']);
+       
+    minMat =[minMat; eval(['time' num2str(fileNum) '(1);'])];
+    maxMat =[maxMat; eval(['time' num2str(fileNum) '(end);'])];
     loopCounter = loopCounter+1;
 end
+
 
 %% Setting the Default Values for Processing Parameters to Last Stored Values
 
@@ -147,8 +149,9 @@ else
     lastCommonTime = timeRange(end);
 end
 
-commonTime = firstCommonTime:samplingInt:lastCommonTime; % Creates common time vector
-lenTime =length(commonTime);
+time = firstCommonTime:samplingInt:lastCommonTime; % Creates common time vector
+lenTime =length(time);
+
 
 %% File Loop
 icc_pos = find(ch==icc);
@@ -161,93 +164,110 @@ if selection ~=4
 else
     artChk = 'no';
 end
-% temp = cell(nFiles,1);
-% signal = cell(nFiles,1);
+data = cell(nFiles,1);
 for fileNum = 1:nFiles
-    data(fileNum).fName = fNames{fileNum};
     %%%% Truncating Signals to Common Time Portion
     [fpt,lpt] = deal([]);
     fstr = num2str(fileNum);
-    dTime = diff(commonTime);
-    if any(dTime<=0)
+    eval(['blah = time' fstr ';']);
+    dtime = diff(time);
+    if any(dtime<=0)
         errordlg('Time Axis Vector Inconsistent: Please Make Sure Time Axis in Each File Has Evenly Spaced Ascending Values;')
-    end    
-    fpt = find(time{fileNum} >= firstCommonTime,1);
+    end
+    eval(['fpt = find(blah >= firstCommonTime,1);']);
     lpt = fpt + lenTime;
     commonPts = fpt:lpt;
-    lenDiff = length(commonTime) - length(commonPts);
+    lenDiff = length(time) - length(commonPts);
     lpt = lpt+lenDiff;
     commonPts = fpt:lpt;
     if lightChannelIndex ~=-1
-        data(fileNum).raw = data(fileNum).raw(commonPts,[ch lightChannelIndex]);% Inserting light channel into 'data'
+        eval(['data' fstr '= data' fstr '(commonPts,[ch lightChannelIndex]);']); % Inserting light channel into 'data'
     else
-        data(fileNum).raw = data(fileNum).raw(commonPts,ch);
+        eval(['data' fstr '= data' fstr '(commonPts,ch);']);
     end
-    % Highpass Filtering Signals
-    data(fileNum).hp(:,extra_pos) = chebfilt(data(fileNum).raw(:,extra_pos),samplingInt,hpf,'high');
-%     temp{fileNum}(:,extra_pos) = chebfilt(data{1}(:,extra_pos),samplingInt,hpf,'high');
+    %%%% Highpass Filtering Signals
+    
+    eval(['temp' fstr ' = data' fstr ';']); % Leaving light channel out of 'temp'
+    eval(['temp' fstr '(:,extra_pos) = chebfilt(data' fstr '(:,extra_pos),samplingInt,hpf,''high'');']); % Highpassing extracellular signals
     if ~isempty(icc_pos)
-%         temp{fileNum}(:,icc_pos) = chebfilt(data{fileNum}(:,icc_pos),samplingInt,hpf_icc,'high');
-        data(fileNum).hp(:,icc_pos) = chebfil(data(fileNum).raw(:,icc_pos),samplingInt,hpf_icc,'high');
+        eval(['temp' fstr '(:,icc_pos) = chebfilt(data' fstr '(:,icc_pos),samplingInt,hpf_icc,''high'');']); % Highpassing intracellular signal(s)
     end
     
+    
     if strcmpi(artChk,'yes')
-        data(fileNum).hp = autoartremove(data(fileNum).hp,commonTime);
-%         temp{fileNum} = autoartremove(temp{fileNum},time);
+        eval(['temp' fstr ' = autoartremove(temp' fstr ',time);']);
     end
     
     %%%% Filtfilt.m Error Message
-    if any(isnan(data(fileNum).hp(:)))
+    blah = eval(['temp' fstr ';']);
+    if any(isnan(blah(:)))
         errordlg('Signal Filtering Error! Please re-specify the time range')
     end
     
     if strcmpi(threshdenoising,'y')
-%         temp{fileNum} = chebfilt(overthreshremove(temp{fileNum},time),samplingInt,hpf,'high');
-        data(fileNum).hp = chebfilt(overthreshremove(data(fileNum).hp,time),samplingInt,hpf,'high');
+        eval(['temp' fstr ' = chebfilt(overthreshremove(temp' fstr...
+            ',time),samplingInt,hpf,''high'');']); % Manually chops
+        %         % ... off stim artifacts that were not properly removed.
     end
     %%%% Filtfilt.m Error Message
-    if any(isnan(data(fileNum).hp(:)))
+    blah = eval(['temp' fstr ';']);
+    if any(isnan(blah(:)))
         errordlg('Signal Filtering Error! Please re-specify the time range')
     end
     %%%% Removing 60Hz noise
     if strcmpi(denoise,'y')
-        data(fileNum).hp = chebfilt(double(data(fileNum).hp),samplingInt,stopband,'stop');
-%         temp{fileNum} = chebfilt(temp{fileNum},samplingInt,stopband,'stop');
+        eval(['temp' fstr ' = double(temp' fstr ');']);
+        eval(['temp' fstr '=chebfilt(temp' fstr...
+            ',samplingInt,stopband,''stop'');']) %%%%% Stopbands
         %%%% Filtfilt.m Error Message
-        if any(isnan(data(fileNum).hp(:)))
+        blah = eval(['temp' fstr ';']);
+        if any(isnan(blah(:)))
             errordlg('Signal Filtering Error! Please re-specify the time range')
         end
     end
-    data(fileNum).smooth = data(fileNum).hp;
+    
+    eval(['signal' fstr '=temp' fstr ';'])
+    
     %%%% Filtfilt.m Error Message
-    if any(isnan(data(fileNum).hp(:)))
+    blah = eval(['temp' fstr ';']);
+    if any(isnan(blah(:)))
         errordlg('Signal Filtering Error! Please re-specify the time range')
     end
     
     %%%% Signal Rectification or absolute values
     if hpf >= 20 % Rectification only when signal is highpassed over 20Hz
+        %%%%%%%% Use these lines for half-wave rectification %%%%%%
+        %             clear f
+        %             eval(['f = signal' fstr ';']);
+        %             eval(['f(:,extra_pos) = signal' fstr '(:,extra_pos)<0;'])
+        %             eval(['signal' fstr '(f)=0;'])
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%% Altneratively, use this for absolute values %%%%
-%         signal{fileNum} = abs(signal{fileNum});
-        data(fileNum).smooth = abs(data(fileNum).smooth);
+        eval(['signal' fstr ' = abs(signal' fstr ');'])
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end
-%     signal{fileNum}(:,extra_pos) = chebfilt(signal{fileNum}(:,extra_pos),samplingInt,lpf,'low');
-    data(fileNum).smooth(:,extra_pos) = chebfilt(data(fileNum).smooth(:,extra_pos),samplingInt,lpf,'low');
+    
+    eval(['signal' fstr '(:,extra_pos) = (chebfilt(signal' fstr...
+        '(:,extra_pos),samplingInt,lpf,''low''));']) % Lowpasses extracellular signals
     if ~isempty(icc_pos)
-        data(fileNum).smooth(:,icc_pos) = chebfilt(data(fileNum).smooth(:,icc_pos),samplingInt,lpf_icc,'low');
+        eval(['signal' fstr '(:,icc_pos)=chebfilt(signal' fstr...
+            '(:,icc_pos),samplingInt,lpf_icc,''low'');']) % Lowpasses intracellular signals
     end
+    
+    
     %%%% Filtfilt.m Error Message
-    if any(isnan(data(fileNum).smooth(:)))
+    blah = eval(['signal' fstr ';']);
+    if any(isnan(blah(:)))
         errordlg('Signal Filtering Error! Please re-specify the time range')
     end
 end
 
-data(1).time = commonTime;
-globData = data(1).raw;
-globTime = data(1).time;
+globData = data1;
+globTime = time;
 
 
 %% Choice of Removing Light Artifacts
+
 % ques = questdlg('Automatically remove light artifacts?','LIGHT ARTIFACT REMOVAL','Yes','No','No');
 % if strcmpi(ques,'yes')
 %     dataStruct_mod = slowartifactremove(dataStruct,samplingInt);
