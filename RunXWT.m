@@ -2,15 +2,16 @@
 % Runs mfload, newpreprocessdata, and xwplotmd (in that order). Many other
 % custom-written scripts are also executed in the process.
 
-% addpath(genpath('C:\Users\pujalaa\Documents\MATLAB\General'));
-% addpath(genpath('C:\Users\pujalaa\Documents\MATLAB\Spectral-Analysis'));
-
+close all
 %% Load Multiple Files at Once and Create a Single Large Data Structure
 % Use loadfiles instead of mfload to singly load data from files into
 % MATLAB workspace. The only requirement of mfload is that all the files
 % must be on the same path (i.e. in the same directory or folder)
 
 LoadFiles
+
+%%
+Optogenetic
 
 %% Preprocesses/Conditions the Loaded Data Prior to Wavelet Transformation
 % (1) Aligns signals with respect to an event (such as onset of electrical 

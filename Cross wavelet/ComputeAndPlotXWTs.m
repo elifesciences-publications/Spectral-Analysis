@@ -5,7 +5,7 @@
 % For e.g., Wxy(:,:,2,3) is the matrix of XW coefficients from the 2nd file
 % and computed for the 3rd pair of channels being compared.
 
-% Author: AP
+% Avinash Pujala, O'Donovan lab/NIH, 2014
 
 %% Variables Glossary
 % Wxy ==> XWT coefficients. Values are complex numbers whose magnitude
@@ -376,7 +376,7 @@ for file = 1:nFiles % File Number Loop # 1
             
             %# Plotting phase histograms
             figure('Name',['Rose Diagram, file # ' num2str(file) ', Ch ' num2str(ch(chNum)) '-' num2str(ch(chNum+1))],'color','w')
-            PlotPhaseHist(Wxy.phase_hist{file,chNum}, Wxy.phase_hist_wt{file,chNum},Wxy.phase_angles{file,chNum}, Wxy.phase_mean(file,chNum))
+%             PlotPhaseHist(Wxy.phase_hist{file,chNum}, Wxy.phase_hist_wt{file,chNum},Wxy.phase_angles{file,chNum}, Wxy.phase_mean(file,chNum))
             
             
             %% TIME-VARYING MEAN FREQUENCIES AND XW POWERS

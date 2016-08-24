@@ -54,7 +54,7 @@ function varargout=xwt(x,y,varargin)
 % Custom modifications by Avinash Pujala, Janelia Research Campus, 2015
 
 %% Choose background noise type (for statistical significance testing)
-noise_type = 'red'; % ('red' or 'white'; default: 'white')
+noise_type = 'white'; % ('red' or 'white'; default: 'white')
 
 %% Validate and reformat timeseries
 [x,dt]=formatts(x);
@@ -110,7 +110,6 @@ end
 sigmax = std(x(:,2));
 sigmay = std(y(:,2));
 
-Args.J1 = -1; % Added this on 12/17/2015 to make consistent with # of scales output by wavelet.m
 
 %% Compute crosswavelet
 [X,period,scale,coix] = wavelet(x(:,2),dt,Args.Pad,Args.Dj,Args.S0,Args.J1,Args.Mother);
