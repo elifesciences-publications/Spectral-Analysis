@@ -341,14 +341,16 @@ for file = 1:nFiles % File Number Loop # 1
                     'k','linewidth',1.5)
                 
             elseif strcmpi(traceType,'smooth')
-                tempSig(:,ch) = zscore(sigMat(:,chNum,file));
+%               tempSig(:,chNum) = zscore(sigMat(:,chNum,file));
+                tempSig(:,chNum) = zscore(data(file).smooth(:,chNum));
                 tempTime = linspace(firstTime,lastTime,length(tempSig)); % Adding firstTime to the time vector here
                 % will set the time of the first stimulus in the stimulus
                 % train to a value of zero
                 %                 plot(tempTime,tempSig(:,chNum),colors(chNum),'linewidth',1.5)
-                plot(tempTime,tempSig(:,ch)+2.5,'k','linewidth',1.5)
-                tempSig(:,ch+1) = zscore(sigMat(:,chNum+1,file));
-                plot(tempTime,tempSig(:,ch+1)-2.5,'k','linewidth',1.5)
+                plot(tempTime,tempSig(:,chNum)+2.5,'k','linewidth',1.5)
+%                 tempSig(:,chNum+1) = zscore(sigMat(:,chNum+1,file));
+                tempSig(:,chNum+1) = zscore(data(file).smooth(:,chNum+1));
+                plot(tempTime,tempSig(:,chNum+1)-2.5,'k','linewidth',1.5)
             end
             yl2 = ylabel([{'Normalized'};{'Amplitude'}],'fontsize',14,'color','k');
             ylpos2 = get(yl2,'pos');
