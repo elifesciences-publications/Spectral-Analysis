@@ -54,7 +54,7 @@ function varargout=xwt(x,y,varargin)
 % Custom modifications by Avinash Pujala, Janelia Research Campus, 2015
 
 %% Choose background noise type (for statistical significance testing)
-noise_type = 'white'; % ('red' or 'white'; default: 'white')
+noise_type = 'red'; % ('red' or 'white'; default: 'white')
 
 %% Validate and reformat timeseries
 [x,dt]=formatts(x);
@@ -151,7 +151,7 @@ if ~strcmpi(Args.Mother,'morlet')
     sig95(:)=nan;
 end
 
-if 1 %Args.MakeFigure
+if 0 %Args.MakeFigure
     Yticks = 2.^(fix(log2(min(period))):fix(log2(max(period))));
     if Args.BlackandWhite
         levels = [0.25,0.5,1,2,4,8,16];

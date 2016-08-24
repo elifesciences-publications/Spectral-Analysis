@@ -135,10 +135,9 @@ for file = 1:nFiles % File Number Loop # 1
     fileCounter = fileCounter + 1;
     for chNum = 1:nChannelPairs % Channel Number Loop # 1
         chStr = ['ch' num2str(ch(chNum)) num2str(ch(chNum+1))];
-        cellNum = cellNum+1;
-        
+        cellNum = cellNum+1;    
         [Wxy.raw(:,:,file,chNum), period,scale, coi, sig95]= xwt([Wxy.time(:) sigMat(:,chNum,file)],[Wxy.time(:) sigMat(:,chNum+1,file)],...
-            Wxy.pad, Wxy.dj,'S0',Wxy.S0, 'ms', Wxy.maxScale, 'Mother', Wxy.motherWavelet);
+            Wxy.pad, Wxy.dj,'S0',Wxy.S0, 'ms', Wxy.maxScale, 'Mother', Wxy.motherWavelet);     
         scalingFactor = (sigmaxy(1,file)*sigmaxy(2,file))/(sigmaXY(1)*sigmaXY(2));
         sig95 = scalingFactor*sig95;
         Wxy.sig95(:,:,file,chNum) = sig95;
@@ -374,8 +373,8 @@ for file = 1:nFiles % File Number Loop # 1
                     hold off;
             end
             
-            %# Plotting phase histograms
-            figure('Name',['Rose Diagram, file # ' num2str(file) ', Ch ' num2str(ch(chNum)) '-' num2str(ch(chNum+1))],'color','w')
+            %# Plotting phase histograms (Need to fix this soon!)
+%             figure('Name',['Rose Diagram, file # ' num2str(file) ', Ch ' num2str(ch(chNum)) '-' num2str(ch(chNum+1))],'color','w')
 %             PlotPhaseHist(Wxy.phase_hist{file,chNum}, Wxy.phase_hist_wt{file,chNum},Wxy.phase_angles{file,chNum}, Wxy.phase_mean(file,chNum))
             
             
@@ -418,7 +417,7 @@ allData.data = data;
 allData.Wxy = Wxy;
 save('allData','allData', '-v7.3');
 
-return;
+break;
 
 %% Averaged XW Plots
 Wxy = W_coi_sig_alt;
@@ -493,34 +492,6 @@ statMat =[chLabelMat; statMat; fNamesMat];
 statMat = [statMat intraIsoVars];
 
 
-
-% labCompSid = 'S-1-5-21-12604286-656692736-1848903544';
-% % myLaptopSid = 'S-1-5-21-2395549063-1654931228-1756539298'; % Dell E1505
-% myLaptopSid = 'S-1-5-21-3197369867-541179473-1092110829'; % Dell XPS
-% sid =getsid;
-% strangeCompCheck =0;
-% switch sid
-%     case labCompSid
-%         [success, message] = ...
-%             xlswrite('C:\Documents and Settings\pujalaav.nih\My Documents/temp.xls',statMat);
-%         if success
-%             'Data has been written to temp in My Documents'
-%         else
-%             errordlg('Data writing failed! Excel file must be closed for writing data')
-%         end
-%     case myLaptopSid
-%         [success,message]= ...
-%             xlswrite('C:\Users\Avi\Documents\temp.xls',statMat);
-%
-%         if success
-%             'Data has been written to temp in My Documents'
-%         else
-%             errordlg('Data writing failed! Excel file must be closed for writing data')
-%         end
-%     otherwise
-%         'This is not your lab or home computer, so data has not been written'
-%         strangeCompCheck = 1;
-% end
 
 %% OPTION FOR PHASE PLOTS
 ButtonName = questdlg('Plot phase distributions?', ...
