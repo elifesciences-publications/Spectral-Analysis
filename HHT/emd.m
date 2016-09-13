@@ -1,7 +1,7 @@
 function imf = emd(x)
 % Empiricial Mode Decomposition (Hilbert-Huang Transform)
 % imf = emd(x)
-% Func : findpeaks_hht
+% Required functions: GetPks
 
 x   = transpose(x(:));
 imf = [];
@@ -38,7 +38,6 @@ if abs(u1-u2) > 1, u = 0;
 else,              u = 1; end
 
 function s = getspline(x)
-
 N = length(x);
 p = GetPks(x);
 s = spline([0 p N+1],[0 x(p) 0],1:N);

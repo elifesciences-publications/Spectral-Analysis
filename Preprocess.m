@@ -188,7 +188,7 @@ for fileNum = 1:nFiles
 %     temp{fileNum}(:,extra_pos) = chebfilt(data{1}(:,extra_pos),samplingInt,hpf,'high');
     if ~isempty(icc_pos)
 %         temp{fileNum}(:,icc_pos) = chebfilt(data{fileNum}(:,icc_pos),samplingInt,hpf_icc,'high');
-        data(fileNum).hp(:,icc_pos) = chebfil(data(fileNum).raw(:,icc_pos),samplingInt,hpf_icc,'high');
+        data(fileNum).hp(:,icc_pos) = chebfilt(data(fileNum).raw(:,icc_pos),samplingInt,hpf_icc,'high');
     end
     
     if strcmpi(artChk,'yes')

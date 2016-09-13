@@ -57,7 +57,7 @@ if nargout ==3
     maxF = zeros(1,size(Wxy,2));
     for t = 1:size(Wxy,2)
         gps = sqrt(abs(Wxy(:,t)));
-        pks = findpeaks_hht(gps);
+        pks = GetPks(gps);
         pks(gps(pks)<20) = [];
         if ~isempty(pks)         
             maxFInd = find(freq == max(freq(pks)));

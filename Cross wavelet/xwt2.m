@@ -1,4 +1,4 @@
-function varargout=xwt(x,y,varargin)
+function varargout=xwt2(x,y,varargin)
 %% Cross wavelet transform
 % Creates a figure of cross wavelet power in units of
 % normalized variance.

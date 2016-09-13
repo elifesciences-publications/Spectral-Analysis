@@ -48,8 +48,13 @@ noiseType = 'red'; %('red' or 'white')
 fourier_factor = 1.0330; % Conversion factor for changing wavelet scales to periods.
 
 peakDetectionThreshold = 0.01; % Determines the peak detection for global wavelet spectrum plotted to the right of XWT.
-% Lower value results in detection of smaller peaks.
 
+                     % Lower value results in detection of smaller peaks.               
+
+freqRange = [10 200]; % Power for frequencies only within this range will be calculated and displayed
+stringency = 0.1;
+stringency2 = 1;
+% Lower value results in detection of smaller peaks.
 scaleRange = 1./(freqRange*fourier_factor);
 S0 = min(scaleRange);
 MaxScale = max(scaleRange);

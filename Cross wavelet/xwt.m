@@ -70,9 +70,9 @@ end
 n=length(t);
 dj = varargin{2};
 %----------default arguments for the wavelet transform-----------
-Args=struct('Pad',1,...      % pad the time series with zeroes (recommended)
+Args=struct('Pad',1,...      % pad the time seri                                                                                                                                                                                                                                   es with zeroes (recommended)                                                                                                                                                                                                                                                                                                                                                  
     'Dj',dj, ...    % this will do 64 sub-octaves per octave
-    'S0',2*dt,...    % this says start at a scale of 2 years
+    'S0',2*dt,...    % this says start at a scale of 2 years                                                                                                                                                                                                                                                                                                                                   
     'J1',[],...
     'Mother','DOG', ...
     'MaxScale',[],...   %a more simple way to specify J1
@@ -151,7 +151,7 @@ if ~strcmpi(Args.Mother,'morlet')
     sig95(:)=nan;
 end
 
-if Args.MakeFigure
+if 0 %Args.MakeFigure
     Yticks = 2.^(fix(log2(min(period))):fix(log2(max(period))));
     if Args.BlackandWhite
         levels = [0.25,0.5,1,2,4,8,16];

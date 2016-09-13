@@ -122,7 +122,6 @@ if (pad == 1)
 	x = [x,zeros(1,2^(base2+1)-n1)];
 end
 n = length(x);
-
 %....construct wavenumber array used in transform [Eqn(5)]
 k = [1:fix(n/2)];
 k = k.*((2.*pi)/(n*dt));
