@@ -1,108 +1,98 @@
 
-function [varargout] = ComputeMultiBandXWT(varargin);
+function [varargout] = ComputeMultiBandXWT(varargin)
 % ComputeMultiBandXWT - For a given time seris, computes & displays the XWT and a variant of it
 % where only frequency peaks at each time point are kept.
 %
-% [Wxy,Wxy_fPeaks,freq,coi,sig95] = ComputeMultiBandXWT(signals,timeVec,freqRange,dj,stringency,phaseType,plotSwitch);
-% [Wxy,Wxy_fPeaks,freq,coi,sig95] = ComputeMultiBandXWT(signals,samplingInt,freqRange,dj,stringency,phaseType,plotSwitch);
+% Wxy = ComputeMultiBandXWT(signals,timeVec);
+% [Wxy,Wxy_fPeaks,freq,coi,sig95] = ComputeMultiBandXWT(signals,dt);
+% [....] = ComputeMultiBandXWT(signals,timeVec,'freqRange', freqRange, 'dj', dj, 
+%           'timeRange', timeRange, 'phaseType', phaseType,'stringency', stringency,
+%           'plotsSwitch', plotSwitch)
 % Inputs:
 % plotSwitch = 1; will result in plotting of the Wxy
 % plotSwitch = 2; will result in plotting of Wxy_fPeaks,
-% plotSwitch = 3; will resulti in plotting both
+% plotSwitch = 3; will result in plotting both
+% 
+% Avinash Pujala, JRC/HHMI, 2016
 
+freqRange = [];
+timeRange = [];
+dj = 1/24;
+stringency  = 1;
+phaseType = 'all';
+plotSwitch = 3;
 
-if nargin < 2
-    errordlg('At least a minimum of 2 inputs reqd');
-    return;
-elseif nargin < 3
-    if numel(varargin{2} < 2)
-        dt = varargin{2};
-        timeVec = 0:dt:length(varargin{1})-1;
-    else
-        dt = mode(diff(varargin{2}));
-        timeVec = varargin{2};
-    end
-    freqRange = [];
-    freqRange(1) = 1/length(varargin{1});
-    freqRange(2) = 0.5*dt;
-    dj = 1/2^5;
-    stringency = 1;
-    phaseType = 'all';
-    plotSwitch = 3;
-elseif nargin < 4
-    freqRange = varargin{3};
-    dj = 1/2^5;
-    stringency = 1;
-    phaseType = 'all';
-    plotSwitch = 3;
-elseif nargin < 5
-    freqRange = varargin{3};
-    stringency = 1;
-    phaseType = 'all';
-    plotSwitch = 1;
-elseif nargin < 6
-    freqRange = varargin{3};
-    dj = varargin{4};
-    stringency = varargin{5};
-    phaseType = 'all';
-    plotSwitch = 3;      
-elseif nargin > 7
-    errordlg('Too many inputs!');
+if numel(varargin)<2
+    errordlg('Minimum 2 inputs reqd');
 else
-    freqRange = varargin{3};
-    if numel(freqRange)~=2
-        errordlg('Frequency Range input must contain 2 values!')
+    signal = varargin{1};
+    if any(size(signal)==1)
+        signal = signal(:);
+    elseif size(signal,1)==2
+        signal = signal'; % So as to make arrange the different signals along columns
     end
-    dj = varargin{4};
-    stringency = varargin{5};
-    phaseType = varargin{6};
-    plotSwitch = varargin{7};
+    if numel(varargin{2})==2
+        dt = varargin{2};
+        timeVec = (0:size(signal,1)-1)*dt;        
+        
+    else
+        timeVec = varargin{2};       
+        dt = timeVec(2)-timeVec(1);
+    end
 end
-signal = varargin{1};
-if any(size(signal)==1)
-    signal = signal(:);
-elseif size(signal,1)==2
-    signal = signal'; % So as to make arrange the different signals along columns
+
+
+for jj = 1:numel(varargin)
+    if ischar(varargin{jj})
+        switch lower(varargin{jj})
+            case 'freqrange'
+                freqRange = varargin{jj+1};
+            case 'timerange'
+                timeRange = varargin{jj+1};
+            case 'dj'
+                dj = varargin{jj+1};
+            case 'stringency'
+                stringency = varargin{jj+1};
+            case 'phasetype'
+                phaseType = varargin{jj+1};
+                if sum(strcmpi(phaseType,{'alt','sync','all'}))==0
+                    errordlg('phaseType input must be "alt", "sync", or "both"!')
+                end
+            case 'plotswitch'
+                plotSwitch = varargin{jj+1};
+                if isempty(intersect(plotSwitch,[1 2 3]))
+                    errordlg('plotSwitch input can only be 1, 2, or 3');
+                end
+        end
+    end
 end
-% s1 = getspline(signal);
-% s2 = getspline(-signal);
-% s = ((s1+s2)/2)';
+if ~isempty(timeRange)
+    inds = find(timeVec>= timeRange(1) & timeVec<=timeRange(2));
+    timeVec = timeVec(inds);
+    signal = signal(inds,:);
+end
 
-timeVec = varargin{2};
-% f_max = findpeaks_hht(signal);
-% f_min = findpeaks_hht(signal);
-% f_all = union(f_min(:), f_max(:));
-% s1 = spline(timeVec(f_max),signal(f_max),timeVec);
-% s2 = spline(timeVec(f_min),signal(f_min),timeVec);  % Spline-method does
-% some weird stuff at high frequencies
-% s = (s1+s2)/2;
-% s = interp1(timeVec(f_all),signal(f_all), timeVec);
+maxF = 1/(0.5*dt);
+minF = 1/size(signal,1);
+if isempty(freqRange)
+    freqRange(1) = minF;
+    freqRange(2) = maxF;
+end
 
-% s = zeros(size(signal));
-% for cc = 1:size(signal,2);
-%     [~,s_min,~] = SubtractMinimalEnvelope(signal(:,cc));
-%     [~,s_max,~] = SubtractMinimalEnvelope(-signal(:,cc));
-%     blah = (s_min(:) - s_max(:))/2;
-%     [~,s_min,~] = SubtractMinimalEnvelope(blah);
-%     [~,s_max,~] = SubtractMinimalEnvelope(-blah);
-%     s(:,cc)  = signal(:,cc) - (s_min(:) - s_max(:))/2;
-% end
-
-s = signal;
 
 if ndims(signal)> 2
     errordlg('Input signal size cannot exceed 2 dimensions!');
 elseif size(signal,2) > 2
     errordlg('Signal input must be a matrix with no more than 2 cols, with each col being a different timeseries!')
 elseif any(size(signal)==1)
-    [Wxy,freq,coi, sig95]  = ComputeXWT(s,s,timeVec,freqRange,dj,stringency,phaseType);
+    [Wxy,freq,coi, sig95]  = ComputeXWT(signal,signal,timeVec,freqRange,dj,stringency,phaseType);
 else
-    [Wxy,freq,coi, sig95]  = ComputeXWT(s(:,1),s(:,2),timeVec,freqRange,dj,stringency,phaseType);
+    [Wxy,freq,coi, sig95]  = ComputeXWT(signal(:,1),signal(:,2),timeVec,freqRange,dj,stringency,phaseType);
 end
 
-% s_norm = s/max(s);
-% s_norm = log2(s);
-% sigMat = repmat(s(:)',size(Wxy,1),1);
+% s_norm = signal/max(signal);
+% s_norm = log2(signal);
+% sigMat = repmat(signal(:)',size(Wxy,1),1);
 R = zeros(size(Wxy));
 % B = log2(abs(Wxy)).*sigMat;
 % B = log2(abs(Wxy));
