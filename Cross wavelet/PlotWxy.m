@@ -111,7 +111,7 @@ elseif nargin > 3
     ax3 = axHandles(4);
 end
 
-ax1 = axHandles(1);
+ax1 = axHandles(1); % XW spectrum
 ax2 = axHandles(2);
 ax2b = axHandles(3);
 
@@ -223,6 +223,7 @@ if ((nargin > 3) && (~isempty(sigs)))
     end
     xlim([time(1) time(end)])
     xlabel('Time(s)')
+    linkaxes([ax1,ax3],'x')
 end
 
 

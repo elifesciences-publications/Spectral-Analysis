@@ -54,7 +54,7 @@ function varargout=xwt(x,y,varargin)
 % Custom modifications by Avinash Pujala, Janelia Research Campus, 2015
 
 %% Choose background noise type (for statistical significance testing)
-noise_type = 'red'; % ('red' or 'white'; default: 'white')
+noise_type = 'white'; % ('red' or 'white'; default: 'white')
 
 %% Validate and reformat timeseries
 [x,dt]=formatts(x);
@@ -62,12 +62,21 @@ noise_type = 'red'; % ('red' or 'white'; default: 'white')
 if dt~=dty
     error('timestep must be equal between time series')
 end
-t=(max(x(1,1),y(1,1)):dt:min(x(end,1),y(end,1)))'; %common time period
+% t=(max(x(1,1),y(1,1)):dt:min(x(end,1),y(end,1)))'; 
+t = linspace(max(x(1,1),y(1,1)),min(x(end,1),y(end,1)),size(x,1)); %common time period
+t = t(:);
 if length(t)<4
     error('The two time series must overlap.')
 end
 
-n=length(t);
+n = length(t);
+if n < size(x,1)
+    t = linspace(t(1),t(end), size(x,1));
+end
+dt = t(2)-t(1);
+dty = dt;
+n = length(t);
+
 dj = varargin{2};
 %----------default arguments for the wavelet transform-----------
 Args=struct('Pad',1,...      % pad the time seri                                                                                                                                                                                                                                   es with zeroes (recommended)                                                                                                                                                                                                                                                                                                                                                  
