@@ -96,7 +96,7 @@
 %  E-mail: torrence@ucar.edu              E-mail: gpc@cdc.noaa.gov
 %----------------------------------------------------------------------------
 function [wave,period,scale,coi] = ...
-	wavelet(Y,dt,pad,dj,s0,J1,mother,param);
+	wavelet(Y,dt,pad,dj,s0,J1,mother,param,freqScale)
 
 if (nargin < 8), param = -1;, end
 if (nargin < 7), mother = -1;, end
@@ -123,7 +123,7 @@ if (pad == 1)
 end
 n = length(x);
 %....construct wavenumber array used in transform [Eqn(5)]
-k = [1:fix(n/2)];
+k =  1:fix(n/2);
 k = k.*((2.*pi)/(n*dt));
 k = [0., k, -k(fix((n-1)/2):-1:1)];
 
@@ -131,7 +131,15 @@ k = [0., k, -k(fix((n-1)/2):-1:1)];
 f = fft(x);    % [Eqn(3)]
 
 %....construct SCALE array & empty PERIOD & WAVE arrays
-scale = s0*2.^((0:J1)*dj);
+if strcmpi(freqScale,'lin')
+    maxF = 1/s0;
+    freqVec = (1:J1+1)*dj;
+    freqVec = maxF - freqVec;
+    scale = 1./freqVec; 
+else
+    scale = s0*2.^((0:J1)*dj);
+end
+
 period = scale;
 wave = zeros(J1+1,n);  % define the wavelet array
 wave = wave + i*wave;  % make it complex

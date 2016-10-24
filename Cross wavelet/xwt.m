@@ -4,6 +4,8 @@ function varargout=xwt(x,y,varargin)
 % normalized variance.
 %
 % USAGE: [Wxy,period,scale,coi,sig95]=xwt(x,y,[,settings])
+% [Wxy,~,...] =
+% xwt(x,y,'pad',pad,'dj',dj,'S0',S0,'ms',maxScale,'freqScale',freqScale,'noiseType',noiseType);
 %
 % x & y: two time series
 % Wxy: the cross wavelet transform of x against y
@@ -53,8 +55,43 @@ function varargout=xwt(x,y,varargin)
 
 % Custom modifications by Avinash Pujala, Janelia Research Campus, 2015
 
-%% Choose background noise type (for statistical significance testing)
-noise_type = 'red'; % ('red' or 'white'; default: 'white')
+%% Some default parameters
+pad = 1;
+noiseType = 'white'; % ('red' or 'white'; default: 'white')
+freqScale = 'log'; %('log' or 'lin'); default = 'log';
+dj = 1/12;
+mother = 'Morlet';
+
+%% Extracting inputs
+delInd = [];
+count = 0;
+for jj = 1:numel(varargin)
+    if ischar(varargin{jj})
+        switch lower(varargin{jj})
+            case 'pad'
+                pad = varargin{jj+1};
+            case 'dj'
+                dj = varargin{jj+1};
+            case 'mother'
+                mother = varargin{jj+1};
+            case 'noisetype'
+                count = count + 1;
+                noiseType = varargin{jj+1};
+                delInd(count) = jj;
+            case 'freqscale'
+                count = count + 1;
+                delInd(count) = jj;
+                freqScale = varargin{jj+1};
+            case 'so'
+                S0 = varargin{jj+1};
+            case 'ms'
+                maxScale = varargin{jj+1};           
+        end
+    end
+end
+
+delInd = union(delInd,delInd + 1);
+varargin(delInd) = [];
 
 %% Validate and reformat timeseries
 [x,dt]=formatts(x);
@@ -62,7 +99,7 @@ noise_type = 'red'; % ('red' or 'white'; default: 'white')
 if dt~=dty
     error('timestep must be equal between time series')
 end
-% t=(max(x(1,1),y(1,1)):dt:min(x(end,1),y(end,1)))'; 
+% t=(max(x(1,1),y(1,1)):dt:min(x(end,1),y(end,1)))';
 t = linspace(max(x(1,1),y(1,1)),min(x(end,1),y(end,1)),size(x,1)); %common time period
 t = t(:);
 if length(t)<4
@@ -77,13 +114,13 @@ dt = t(2)-t(1);
 dty = dt;
 n = length(t);
 
-dj = varargin{2};
+
 %----------default arguments for the wavelet transform-----------
-Args=struct('Pad',1,...      % pad the time seri                                                                                                                                                                                                                                   es with zeroes (recommended)                                                                                                                                                                                                                                                                                                                                                  
+Args=struct('Pad',pad,...      % pad the time series                                                                                                                                                                                                                                   es with zeroes (recommended)
     'Dj',dj, ...    % this will do 64 sub-octaves per octave
-    'S0',2*dt,...    % this says start at a scale of 2 years                                                                                                                                                                                                                                                                                                                                   
+    'S0',2*dt,...    % this says start at a scale of 2 years
     'J1',[],...
-    'Mother','DOG', ...
+    'Mother','Morlet', ...
     'MaxScale',[],...   %a more simple way to specify J1
     'MakeFigure',(nargout==0),...
     'BlackandWhite',0,...
@@ -97,7 +134,14 @@ if isempty(Args.J1)
     if isempty(Args.MaxScale)
         Args.MaxScale=(n*.17)*2*dt; %auto maxscale
     end
-    Args.J1=round(log2(Args.MaxScale/Args.S0)/Args.Dj);
+    if strcmpi(freqScale,'log')
+         Args.J1=round(log2(Args.MaxScale/Args.S0)/Args.Dj);
+    elseif strcmpi(freqScale,'lin')
+        freqRange = 1./[Args.MaxScale, Args.S0];
+        freqVec = min(freqRange):dj:max(freqRange);
+        Args.J1 = numel(freqVec);
+    end
+   
 end
 
 ad=mean(Args.ArrowDensity);
@@ -121,8 +165,8 @@ sigmay = std(y(:,2));
 
 
 %% Compute crosswavelet
-[X,period,scale,coix] = wavelet(x(:,2),dt,Args.Pad,Args.Dj,Args.S0,Args.J1,Args.Mother);
-[Y,period,scale,coiy] = wavelet(y(:,2),dt,Args.Pad,Args.Dj,Args.S0,Args.J1,Args.Mother);
+[X,period,scale,coix] = wavelet(x(:,2),dt,Args.Pad,Args.Dj,Args.S0,Args.J1,Args.Mother,-1,freqScale);
+[Y,period,scale,coiy] = wavelet(y(:,2),dt,Args.Pad,Args.Dj,Args.S0,Args.J1,Args.Mother,-1,freqScale);
 
 %# Truncate X,Y to common time interval (this is first done here so that the coi is minimized)
 dte=dt*.01; %to cricumvent round off errors with fractional timesteps
@@ -138,7 +182,7 @@ coi=min(coix,coiy);
 
 Wxy=(X.*conj(Y)); % Not being normalized by division by sigmax*sigmay here.
 
-switch lower(noise_type)
+switch lower(noiseType)
     case 'red'
         %       Pkx=ar1spectrum_ap(Args.AR1(1),period); % This version uses eqn 16
         %           from Torrence & Compo, 1998, which should be equivalent to
