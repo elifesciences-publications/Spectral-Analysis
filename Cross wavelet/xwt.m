@@ -54,7 +54,7 @@ function varargout=xwt(x,y,varargin)
 % Custom modifications by Avinash Pujala, Janelia Research Campus, 2015
 
 %% Choose background noise type (for statistical significance testing)
-noise_type = 'white'; % ('red' or 'white'; default: 'white')
+noise_type = 'red'; % ('red' or 'white'; default: 'white')
 
 %% Validate and reformat timeseries
 [x,dt]=formatts(x);

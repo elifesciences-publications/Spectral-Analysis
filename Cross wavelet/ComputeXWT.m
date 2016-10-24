@@ -107,7 +107,7 @@ end
 %% Removing regions outside COI
 ftmat = repmat(freq(:), 1, length(time));
 coimat = repmat(1./coi(:)',length(freq), 1);
-Wxy(ftmat < coimat) = 0; % Removing regions outside of COI
+% Wxy(ftmat < coimat) = 0; % Removing regions outside of COI
 
 %% Removing insignificant points
 % Wxy(sig95 < stringency) = 0;
