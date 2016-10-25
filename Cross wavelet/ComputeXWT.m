@@ -72,7 +72,6 @@ if isempty(sigmaXY)
 end
 
 scaleRange = 1./(freqRange*fourier_factor); % Scale range corresponding to frequency range.
-strcmpi(freqScale,'lin')
 S0 = min(scaleRange);
 maxScale = max(scaleRange);
 
