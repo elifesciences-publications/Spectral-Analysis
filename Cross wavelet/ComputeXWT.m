@@ -75,9 +75,23 @@ scaleRange = 1./(freqRange*fourier_factor); % Scale range corresponding to frequ
 S0 = min(scaleRange);
 maxScale = max(scaleRange);
 
+if sum(x)==0 % To prevent the error that results in xwt for all zero values of a timeseries
+    rInd = randperm(length(x));
+    rInd = rInd(1);
+    x(rInd) = rand(1);
+end
+
+if sum(y)==0 % To prevent the error that results in xwt for all zero values of a timeseries
+    rInd = randperm(length(y));
+    rInd = rInd(1);
+    y(rInd) = rand(1);
+end
+
 x = [time(:) x(:)];
 y = [time(:) y(:)];
+
 [Wxy,period,~,coi,sig95]= xwt(x,y,'dj',dj,'S0',S0, 'ms', maxScale, 'Mother', mother,'pad',pad,'noiseType',noiseType,'freqScale',freqScale);
+
 freq =1./period;
 Wxy = Wxy/sigmaXY;
 
