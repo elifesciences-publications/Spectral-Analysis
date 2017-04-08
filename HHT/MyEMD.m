@@ -1,9 +1,10 @@
 function imf = MyEMD(y,nCmps)
 % MyEMD - Perform 1st order Empirical Mode Decomposition on input signal
+% imf = MyEMD(y,nComps)
 % Inputs:
 % y - Signal on which to perform the decomposition. If y is a matrix then
 %  treats each col as a signal
-% nCps - number of components (i.e. intrinsic mode functions)
+% nCmps - number of components (i.e. intrinsic mode functions)
 
 if any(size(squeeze(y))==1)
     y = y(:);
