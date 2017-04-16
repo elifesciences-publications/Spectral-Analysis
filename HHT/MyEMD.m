@@ -18,7 +18,8 @@ for cmp = 1:nCmps
         y = [];
         y = imf(cmp-1).res;
     end
-    [imf(cmp).comp(:,col), imf(cmp).res(:,col), imf(cmp).mx{col},imf(cmp).mn{col}]  = GetCubic(y(:,col));     
+    [imf(cmp).comp(:,col), imf(cmp).res(:,col), imf(cmp).mx{col},imf(cmp).mn{col},...
+        imf(cmp).maxEnv(:,col),imf(cmp).minEnv(:,col)] = GetCubic(y(:,col));     
     end
 end
 

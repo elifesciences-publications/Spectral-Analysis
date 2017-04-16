@@ -53,7 +53,7 @@ y = y(:);
 time = time(:);
 if numel(time)==1 && numel(x)>1
     dt = time;
-    time = (0:length(x)-1)*(1/dt);
+    time = (0:length(x)-1)*dt;
 else
     dt = time(2)-time(1);
 end
