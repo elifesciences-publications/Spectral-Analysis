@@ -30,6 +30,7 @@ dF = 0.5;
 tKer = 1;
 fker = 5;
 energyThr = 0.1;
+plotBool = false;
 
 for jj = 1:numel(varargin)
     if ischar(varargin{jj})
@@ -60,21 +61,31 @@ else
 end
 fVec = sort(round((minF:dF:maxF-dF)/dF)*dF,'descend');
 
+fKerWid = ceil(fKerWid/dF);
+tKerWid = ceil(tKerWid/(dt));
 tKer = gausswin(tKerWid);
 fKer = gausswin(fKerWid);
-gker  = fKer(:)*tKer(:)';
-gKer = gker;
-gKer = gKer/sum(gker(:));
+gKer  = fKer(:)*tKer(:)';
+gKer = gKer/sum(gKer(:));
+% gKer = Standardize(gKer);
 
 
 %% IMF and frequencies
-imf = emd(x);
+% imf = emd(x);
+
+imf_all = MyEMD(x,6);
+imf = cell(length(imf_all),1);
+for jj = 1:length(imf_all)
+    imf{jj} = imf_all(jj).comp;
+end
+
 N = length(x);
 d = zeros(length(imf),N);
 [a,h,m] = deal(d);
 for k = 1:length(imf)
     b(k) = sum(imf{k}.*imf{k});
     blah = MyEMD(imf{k},1);
+%     blah = imf_all(k);
     pkInds = union(blah.mx{1},blah.mn{1});    
     dPks = 2*gradient(pkInds)*dt;  
     m(k,pkInds) = dPks;  
@@ -139,11 +150,15 @@ for k = kVec
     inds = sub2ind(size(M),blah(nzInds),nVec(nzInds));
     foo(inds) = A(nVec(nzInds));
     M = M + foo;
+
 end
-H = flipud(conv2(H,gker,'same'));
+H = flipud(conv2(H,gKer,'same'));
 D = flipud(conv2(D,gKer,'same'));
 M = flipud(conv2(M,gKer,'same'));
 
+% H = flipud(H);
+% D = flipud(D);
+% M = flipud(M);
 
 % Set time-frequency plots.
 % N = length(x);
