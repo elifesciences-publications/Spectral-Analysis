@@ -5,6 +5,23 @@ function varargout = ComputeXWT(x,y,time,varargin)
 % [Wxy,...] = ComputeXWT(x,y,dt);
 % [Wxy,...] = ComputeXWT(x,y,time,'freqRange',freqRange,'dj',dj,'stringency',stringency,...
 %       'phaseType',phaseType,'sigmaXY',sigmaXY,'pad',pad,'freqScale',freqScale)
+% Inputs:
+% x,y - The 2 timeseries for which to compute the XWT
+% t - Time vector or sampling interval dt
+% freqRange - 2 element vector that defines the frequency range of
+%   interest. For instance, freqRange = [10 80];
+% dj - Wavelet scale resolution, i.e., how many scales to have between one
+%   scale and the next
+% stringency - A scalard that determines the threshold in zscore units for returning only
+%   those values in the cross-wavelet transform that are above this
+%   threshold
+% phaseType - 'alt','synch', 'both'. Which phases to keep or filter out.
+% sigmaXY - Scalar that represents the crossvariance of two signals.
+% freqScale - 'log' or 'lin'; Determines whether the frequency scale should be log or
+%   linear.
+% pad - 0 or 1; zero pad or not
+% 
+% Avinash Pujala, JRC/HHMI, 2016
 
 %% Fixed and variable parameters
 fourier_factor      = 1.0330; % Conversion factor for changing wavelet scales to periods (true for wavenumber = 6)

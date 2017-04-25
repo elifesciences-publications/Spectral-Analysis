@@ -1,9 +1,9 @@
 function varargout =  hht_dy(x,dt,varargin)
 % Get and plot imds and HHT.
 % H = hht(x,Ts)
-% [H, emd, energies] = hht(x,dt,'freqRange',freqRange,'dF',dF,
+% [M, H, imf, freq, energies] = hht(x,dt,'freqRange',freqRange,'dF',dF,
 %   'plotBool',plotBool,'tKerWid',tKerWid,'fKerWid',fKerWid,
-%   'energyThr',energyThr);
+%   'energyThr',energyThr,'nComps',nComps);
 % :: Syntax
 %    The array x is the input signal and dt is the sampling period.
 %    Example on use: [x,Fs] = wavread('Hum.wav');
@@ -22,15 +22,24 @@ function varargout =  hht_dy(x,dt,varargin)
 % energyThr - Energy threshold as a fraction of the IMF with maximal
 %   energy. IMFs with energy less than this threshols are ommitted from
 %   consideration when generating the HHT
-% 
+% nComps - Number of IMFs to extract
+% emdType = 'full' or 'partial' [default]. If 'partial', emd stops after
+%   first iteration for a component without fulfilling the criterion 
+%   wherein the number of extrema must match the number of zerocrossings
+% extraPks - Extra peaks that can be specified to improve interpolation; 2
+%   cell array. First cell is for maxPks and 2nd is for minPks
+%
 % Modified by Avinash Pujala, JRC/HHMI, 2017
 
 freqRange = [];
 dF = 0.5;
-tKer = 1;
-fker = 5;
+tKerWid = 1;
+fKerWid = 5;
 energyThr = 0.1;
 plotBool = false;
+nComps = 10;
+emdType = 'partial'; 
+extraPks = []; % Not yet implemented
 
 for jj = 1:numel(varargin)
     if ischar(varargin{jj})
@@ -47,6 +56,12 @@ for jj = 1:numel(varargin)
                 fKerWid = varargin{jj+1};
             case 'energythr'
                 energyThr = varargin{jj+1};
+            case 'ncomps'
+                nComps = varargin{jj+1};
+            case 'emdtype'
+                emdType = varargin{jj+1};
+            case 'extrapks'
+                extraPks = varargin{jj+1};
         end
     end
 end
@@ -71,13 +86,26 @@ gKer = gKer/sum(gKer(:));
 
 
 %% IMF and frequencies
-% imf = emd(x);
 
-imf_all = MyEMD(x,6);
-imf = cell(length(imf_all),1);
-for jj = 1:length(imf_all)
-    imf{jj} = imf_all(jj).comp;
+if strcmpi(emdType,'full')
+%     imf = emd(x,'interp','spline');
+%     for jj = 1:length(imf)
+%         delInds = zeros(length(imf),1);
+%         c = corrcoef(imf{jj},x);
+%         if c(2) <0.5
+%             delInds(jj) = 1;
+%         end
+%     end
+%     imf(find(delInds)) = [];
+        imf = emd(x,'nComps',nComps);
+else
+    imf_all = MyEMD(x,nComps);
+    imf = cell(length(imf_all),1);
+    for jj = 1:length(imf_all)
+        imf{jj} = imf_all(jj).comp;
+    end
 end
+
 
 N = length(x);
 d = zeros(length(imf),N);
@@ -85,12 +113,13 @@ d = zeros(length(imf),N);
 for k = 1:length(imf)
     b(k) = sum(imf{k}.*imf{k});
     blah = MyEMD(imf{k},1);
-%     blah = imf_all(k);
-    pkInds = union(blah.mx{1},blah.mn{1});    
-    dPks = 2*gradient(pkInds)*dt;  
-    m(k,pkInds) = dPks;  
+    %     blah = imf_all(k);
+    pkInds = union(blah.mx{1},blah.mn{1});
+    dPks = 2*gradient(pkInds)*dt;
+    m(k,pkInds) = dPks;
     if ~isempty(pkInds)
-        temp = interp1([0; pkInds(:); max(pkInds(end),N)],[max(dPks); dPks(:); mean(dPks)],1:N, 'cubic');
+%         temp = interp1([0; pkInds(:); max(pkInds(end),N)],[max(dPks); dPks(:); mean(dPks)],1:N, 'cubic');
+        temp = interp1([0; pkInds(:); max(pkInds(end),N)],[max(dPks); dPks(:); mean(dPks)],1:N, 'spline');
     else
         temp = m(k,:);
     end
@@ -101,7 +130,7 @@ for k = 1:length(imf)
     h(k,:) = foo.maxEnv;
     blah = MyEMD(gradient(imf{k})/dt/(2*pi),1);
     d(k,:) = blah.maxEnv;
-%     d(k,:) = (blah.maxEnv-blah.minEnv)/2;
+    %     d(k,:) = (blah.maxEnv-blah.minEnv)/2;
     d(k,:) = d(k,:)./a(k,:);
 end
 m = 1./m;
@@ -127,7 +156,7 @@ kVec = find(energies>energyThr);
 for k = kVec
     A = a(k,:);
     
-    blah = (d(k,:)/dF)-(min(fVec)/dF);    
+    blah = (d(k,:)/dF)-(min(fVec)/dF);
     blah(blah>size(D,1)) = size(D,1);
     nzInds = find(blah>0);
     foo = D*0;
@@ -150,7 +179,7 @@ for k = kVec
     inds = sub2ind(size(M),blah(nzInds),nVec(nzInds));
     foo(inds) = A(nVec(nzInds));
     M = M + foo;
-
+    
 end
 H = flipud(conv2(H,gKer,'same'));
 D = flipud(conv2(D,gKer,'same'));

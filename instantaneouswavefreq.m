@@ -4,7 +4,18 @@ function varargout = instantaneouswavefreq(Wxy,freq)
 %   wavelet coefficients
 % mean_instantaneous_freq = instantaneouswavefreq(Wxy,freq);
 % [...,peakpower_instantaneous_frequency] = instantaneouswavefreq(Wxy,freq)
-% [~,~,std_instantaneous_freq] = instantaneouswavefreq(Wxy,freq)
+% [~,~,std_instantaneous_freq,maxPow] = instantaneouswavefreq(Wxy,freq)
+% Inputs:
+% Wxy - Matrix of wavelet coefficients of size [F,T], where F is number of
+%   frequency scales and T is # of time points
+% freq - Freq vector of length equal to the number of rows of Wxy
+% Outputs:
+% mean_instantaneous_freq - Vector of length T, where each entry is the
+%   power weighted frequency at a given time
+% peakpower_instantaneous_freq - Vector of length T, where each element is
+%   the freq at max power at an instant in time
+% 
+% maxPow - Max power value at each time point
 
 if nargin < 2
     errordlg('At least 2 input variables required')
@@ -48,9 +59,14 @@ diffmat(diffmat<0)=0;
 pfvec = sum(diffmat.*fmat);
 pfvec(isnan(pfvec))=0;
 
+
+[maxPow,maxPowInds] = max(abs(Wxy),[],1);
+maxPowFreq = SparseIndex(fmat, maxPowInds,1:size(fmat,2));
+
 varargout{1} = mfvec;
-varargout{2} = pfvec;
+varargout{2} = maxPowFreq;
 varargout{3} = freq_inst_std;
+varargout{4} = maxPow;
 
 
 if nargout ==3
