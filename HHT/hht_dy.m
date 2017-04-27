@@ -35,11 +35,12 @@ freqRange = [];
 dF = 0.5;
 tKerWid = 1;
 fKerWid = 5;
-energyThr = 0.1;
+energyThr = 0;
 plotBool = false;
 nComps = 10;
 emdType = 'partial'; 
 extraPks = []; % Not yet implemented
+freqVec = [];
 
 for jj = 1:numel(varargin)
     if ischar(varargin{jj})
@@ -62,6 +63,8 @@ for jj = 1:numel(varargin)
                 emdType = varargin{jj+1};
             case 'extrapks'
                 extraPks = varargin{jj+1};
+            case 'freqvec'
+                freqVec = varargin{jj+1};
         end
     end
 end
@@ -88,16 +91,7 @@ gKer = gKer/sum(gKer(:));
 %% IMF and frequencies
 
 if strcmpi(emdType,'full')
-%     imf = emd(x,'interp','spline');
-%     for jj = 1:length(imf)
-%         delInds = zeros(length(imf),1);
-%         c = corrcoef(imf{jj},x);
-%         if c(2) <0.5
-%             delInds(jj) = 1;
-%         end
-%     end
-%     imf(find(delInds)) = [];
-        imf = emd(x,'nComps',nComps);
+    imf = emd(x,'nComps',nComps);
 else
     imf_all = MyEMD(x,nComps);
     imf = cell(length(imf_all),1);
@@ -106,10 +100,9 @@ else
     end
 end
 
-
 N = length(x);
 d = zeros(length(imf),N);
-[a,h,m] = deal(d);
+[a,h,m,a_env] = deal(d);
 for k = 1:length(imf)
     b(k) = sum(imf{k}.*imf{k});
     blah = MyEMD(imf{k},1);
@@ -124,10 +117,14 @@ for k = 1:length(imf)
         temp = m(k,:);
     end
     m(k,:) = temp;
-    a(k,:) = blah.maxEnv - blah.minEnv;
+     a_env(k,:) = blah.maxEnv - blah.minEnv;
+%     a(k,:) = sqrt(imf{k}.^2);
+    a(k,:) = abs(hilbert(imf{k}));
+%     a(k,:) = real(hilbert(imf{k}));
     th   = angle(hilbert(imf{k}));
-    foo = MyEMD(gradient(th)/dt/(2*pi),1);
-    h(k,:) = foo.maxEnv;
+%     foo = MyEMD(gradient(th)/dt/(2*pi),1);
+%     h(k,:) = foo.maxEnv;
+    h(k,:) = gradient(th)/dt/(2*pi);
     blah = MyEMD(gradient(imf{k})/dt/(2*pi),1);
     d(k,:) = blah.maxEnv;
     %     d(k,:) = (blah.maxEnv-blah.minEnv)/2;
@@ -144,40 +141,44 @@ H = zeros(length(fVec),length(x));
 D = H;
 M = H;
 d((d<minF) | (d>maxF))=0;
-d = round(d/dF)*dF;
+d = ceil(d/dF)*dF;
 
 h((h<minF) | (h>maxF))=0;
-h = round(h/dF)*dF;
+h = ceil(h/dF)*dF;
 
 m((m<minF) | (m>maxF))=0;
-m = round(m/dF)*dF;
+m = ceil(m/dF)*dF;
 
 kVec = find(energies>energyThr);
 for k = kVec
-    A = a(k,:);
-    
+    A = a(k,:);    
     blah = (d(k,:)/dF)-(min(fVec)/dF);
+%     [f_hist,f_vals] = hist(d(k,:),sort(fVec,'ascend'));
+%     nBins = numel(f_hist);
+%     [a_hist,a_vals] = hist(a(k,:),nBins);    
     blah(blah>size(D,1)) = size(D,1);
     nzInds = find(blah>0);
     foo = D*0;
-    inds = sub2ind(size(D),blah(nzInds),nVec(nzInds));
+    inds = round(sub2ind(size(D),blah(nzInds),nVec(nzInds)));
     foo(inds) = A(nVec(nzInds));
     D = D + foo;
     
+    A = a(k,:);
     blah = (h(k,:)/dF) - (min(fVec)/dF);
     blah(blah>size(H,1)) = size(H,1);
     nzInds = find(blah>0);
     foo = H*0;
-    inds = sub2ind(size(H),blah(nzInds),nVec(nzInds));
+    inds = round(sub2ind(size(H),blah(nzInds),nVec(nzInds)));
     foo(inds) = A(nVec(nzInds));
     H = H + foo;
     
+    A_env = a_env(k,:);
     blah = (m(k,:)/dF) - (min(fVec)/dF);
     blah(blah>size(M,1)) = size(M,1);
     nzInds = find(blah>0);
     foo = M*0;
-    inds = sub2ind(size(M),blah(nzInds),nVec(nzInds));
-    foo(inds) = A(nVec(nzInds));
+    inds = round(sub2ind(size(M),blah(nzInds),nVec(nzInds)));
+    foo(inds) = A_env(nVec(nzInds));
     M = M + foo;
     
 end
@@ -185,20 +186,7 @@ H = flipud(conv2(H,gKer,'same'));
 D = flipud(conv2(D,gKer,'same'));
 M = flipud(conv2(M,gKer,'same'));
 
-% H = flipud(H);
-% D = flipud(D);
-% M = flipud(M);
-
-% Set time-frequency plots.
-% N = length(x);
-% c = linspace(0,(N-2)*dt,N-1);
-% for k = v(1:2)
-%    figure, plot(c,d{k},'k.','Color',b([k k k]),'MarkerSize',3);
-%    set(gca,'FontSize',8,'XLim',[0 c(end)],'YLim',[0 1/2/dt]);
-%    xlabel('Time'),
-%    ylabel('Frequency');
-% end
-
+M(M<0) = 0;
 
 %% IMF plots
 if plotBool
