@@ -1,4 +1,4 @@
-function varargout =  hht_dy(x,dt,varargin)
+function varargout =  hht_freq(x,dt,varargin)
 % Get and plot imds and HHT.
 % H = hht(x,Ts)
 % [M, H, imf, freq, energies] = hht(x,dt,'freqRange',freqRange,'dF',dF,
@@ -37,8 +37,8 @@ tKerWid = 1;
 fKerWid = 5;
 energyThr = 0;
 plotBool = false;
-nComps = 10;
-emdType = 'partial'; 
+nComps = 20;
+emdType = 'full'; 
 extraPks = []; % Not yet implemented
 freqVec = [];
 
@@ -69,27 +69,27 @@ for jj = 1:numel(varargin)
     end
 end
 
-
-if isempty(freqRange)
-    minF = 1/length(x);
-    maxF = 1/(0.5*dt);
+if ~isempty(freqVec)
+    fVec = freqVec;
+    [minF, maxF] = deal(min(freqVec),max(freqVec));
 else
-    minF = min(freqRange);
-    maxF = max(freqRange);
+    if isempty(freqRange)
+        minF = 1/length(x);
+        maxF = 1/(0.5*dt);
+    else
+        minF = min(freqRange);
+        maxF = max(freqRange);
+    end
+    fVec = sort(round((minF:dF:maxF-dF)/dF)*dF,'descend');
 end
-fVec = sort(round((minF:dF:maxF-dF)/dF)*dF,'descend');
-
 fKerWid = max(1,ceil(fKerWid/dF));
 tKerWid = max(1,ceil(tKerWid/dt));
 tKer = gausswin(tKerWid);
 fKer = gausswin(fKerWid);
 gKer  = fKer(:)*tKer(:)';
 gKer = gKer/sum(gKer(:));
-% gKer = Standardize(gKer);
-
 
 %% IMF and frequencies
-
 if strcmpi(emdType,'full')
     imf = emd(x,'nComps',nComps);
 else
@@ -103,15 +103,14 @@ end
 N = length(x);
 d = zeros(length(imf),N);
 [a,h,m,a_env] = deal(d);
+b = zeros(length(imf),1);
 for k = 1:length(imf)
     b(k) = sum(imf{k}.*imf{k});
-    blah = MyEMD(imf{k},1);
-    %     blah = imf_all(k);
+    blah = MyEMD(imf{k},1);   
     pkInds = union(blah.mx{1},blah.mn{1});
     dPks = 2*gradient(pkInds)*dt;
     m(k,pkInds) = dPks;
     if ~isempty(pkInds)
-%         temp = interp1([0; pkInds(:); max(pkInds(end),N)],[max(dPks); dPks(:); mean(dPks)],1:N, 'cubic');
         temp = interp1([0; pkInds(:); max(pkInds(end),N)],[max(dPks); dPks(:); mean(dPks)],1:N, 'spline');
     else
         temp = m(k,:);
@@ -120,68 +119,52 @@ for k = 1:length(imf)
     a_env(k,:) = blah.maxEnv - blah.minEnv;
     a(k,:) = abs(hilbert(imf{k}));
     th   = angle(hilbert(imf{k}));
-    h(k,:) = gradient(th)/dt/(2*pi);
-    blah = MyEMD(gradient(imf{k})/dt/(2*pi),1);
-    d(k,:) = blah.maxEnv; 
-    d(k,:) = d(k,:)./a(k,:);
+    h(k,:) = gradient(th)/dt/(2*pi);    
 end
 m = 1./m;
-[~,v] = sort(-b);
-energies = b/max(b);
-b = 1-energies;
+energies = 1 -b/max(b);
 
 %% HHT
 nVec = 1:N;
 H = zeros(length(fVec),length(x));
-D = H;
 M = H;
-d((d<minF) | (d>maxF))=0;
-d = ceil(d/dF)*dF;
-
 h((h<minF) | (h>maxF))=0;
-h = ceil(h/dF)*dF;
-
 m((m<minF) | (m>maxF))=0;
-m = ceil(m/dF)*dF;
+if isempty(freqVec)
+    h = ceil(h/dF)*dF;
+    m = ceil(m/dF)*dF;
+end
 
 % kVec = find(energies>energyThr);
 kVec = 1:length(imf);
-for k = kVec
-    A = a(k,:);    
-    blah = (d(k,:)/dF)-(min(fVec)/dF);
-%     [f_hist,f_vals] = hist(d(k,:),sort(fVec,'ascend'));
-%     nBins = numel(f_hist);
-%     [a_hist,a_vals] = hist(a(k,:),nBins);    
-    blah(blah>size(D,1)) = size(D,1);
-    nzInds = find(blah>0);
-    foo = D*0;
-    inds = round(sub2ind(size(D),blah(nzInds),nVec(nzInds)));
-    foo(inds) = A(nVec(nzInds));
-    D = D + foo;
-    
+for k = kVec(:)'
     A = a(k,:);
-    blah = (h(k,:)/dF) - (min(fVec)/dF);
-    blah(blah>size(H,1)) = size(H,1);
-    nzInds = find(blah>0);
+    [f_hist,binInds] = histc(h(k,:),fVec(:));
+    zerInds = binInds == 0;
+    binInds(zerInds) = [];
+    nVec_temp = nVec;
+    nVec_temp(zerInds)=[];
+    inds = sub2ind(size(H),binInds,nVec_temp);    
     foo = H*0;
-    inds = round(sub2ind(size(H),blah(nzInds),nVec(nzInds)));
-    foo(inds) = A(nVec(nzInds));
+    foo(inds) = A(nVec_temp);
     H = H + foo;
     
-    A_env = a_env(k,:);
-    blah = (m(k,:)/dF) - (min(fVec)/dF);
-    blah(blah>size(M,1)) = size(M,1);
-    nzInds = find(blah>0);
+    A_env = a_env(k,:);    
+    [f_hist,binInds] = histc(m(k,:),fVec(:));
+    zerInds = binInds == 0;
+    binInds(zerInds) = [];
+    nVec_temp = nVec;
+    nVec_temp(zerInds)=[];
+    inds = sub2ind(size(M),binInds,nVec_temp);    
     foo = M*0;
-    inds = round(sub2ind(size(M),blah(nzInds),nVec(nzInds)));
-    foo(inds) = A_env(nVec(nzInds));
-    M = M + foo;
-    
+    foo(inds) = A_env(nVec_temp);
+    M = M + foo;    
 end
-H = flipud(conv2(H,gKer,'same'));
-D = flipud(conv2(D,gKer,'same'));
-M = flipud(conv2(M,gKer,'same'));
+% H = flipud(conv2(H,gKer,'same'));
+% M = flipud(conv2(M,gKer,'same'));
 
+H = conv2(H,gKer,'same');
+M = conv2(M,gKer,'same');
 M(M<0) = 0;
 
 %% IMF plots
@@ -212,7 +195,6 @@ if plotBool
     end
 end
 %% Outputs
-
 varargout{1} = M;
 varargout{2}= H;
 varargout{3} = imf;

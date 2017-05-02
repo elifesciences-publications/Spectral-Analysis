@@ -25,19 +25,16 @@ end
 
 x   = transpose(x(:));
 imf = [];
-c = Inf;
-x_orig = x;
 count_outer = 0;
+count = 0;
 while ~ismonotonic(x) 
     x1 = x;
     sd = Inf;
-    while (sd > 0.1) & ~isimf(x1)        
-        %             s1 = getspline(x1);
-        %             s2 = -getspline(-x1);
-        %             x2 = x1-(s1+s2)/2;        
+    while ((sd > 0.1) && ~isimf(x1)) || (count == 0) % The last part makes sure that it decomposes the signal atleast once   
         x2 = GetCubic(x1);        
         sd = sum((x1-x2).^2)/sum(x1.^2);
         x1 = x2;
+        count = count + 1;
     end    
     imf{end+1} = x1;
     x  = x-x1;
@@ -48,7 +45,6 @@ imf{end+1} = x;
 % FUNCTIONS
 
 function u = ismonotonic(x)
-
 u1 = length(GetPks(x))*length(GetPks(-x));
 if u1 > 0, u = 0;
 else

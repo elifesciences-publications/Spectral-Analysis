@@ -56,7 +56,6 @@ energies = b/max(b);
 b = 1-energies;
 
 %% HHT
-
 nVec = 1:N;
 H = zeros(length(fVec),length(x));
 % d = abs(d);
